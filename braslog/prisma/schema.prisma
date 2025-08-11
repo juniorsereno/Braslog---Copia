@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Client {
+    id        String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+    name      String     @unique @db.VarChar(100)
+    status    ClientStatus @default(ATIVO)
+    createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+    entries   KpiEntry[]
+
+    @@index([name])
+    @@index([status])
+    @@map("clients")
+}
+
+model KpiEntry {
+    id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+    date      DateTime @db.Date
+    kpiType   KpiType  @map("kpi_type")
+    kpiValue  Decimal  @map("kpi_value") @db.Decimal(10, 2)
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+    clientId  String   @map("client_id") @db.Uuid
+    client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+    @@unique([date, clientId, kpiType])
+    @@index([date])
+    @@index([clientId])
+    @@index([kpiType])
+    @@index([date, clientId])
+    @@map("kpi_entries")
+}
+
+enum ClientStatus {
+    ATIVO
+    INATIVO
+
+    @@map("client_status")
+}
+
+enum KpiType {
+    RECEITA
+    ON_TIME
+    OCUPACAO
+    TERCEIRO
+    DISPONIBILIDADE
+
+    @@map("kpi_type")
+}
