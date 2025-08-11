@@ -62,7 +62,7 @@ export function KpiPivotHistory() {
     return map;
   }, [entries]);
 
-  const currency = useMemo(() => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }), []);
+  const integerFormatter = useMemo(() => new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0, minimumFractionDigits: 0 }), []);
 
   const monthLabel = useMemo(() => {
     const safe = typeof month === 'string' ? month : '';
@@ -162,11 +162,11 @@ export function KpiPivotHistory() {
                         const v = row ? row[d] : undefined;
                         return (
                           <TableCell key={d} className="text-center">
-                            {v === undefined
+                          {v === undefined
                               ? "-"
                               : kpi === "RECEITA"
-                              ? currency.format(v)
-                              : `${Number(v).toFixed(1)}%`}
+                              ? integerFormatter.format(v)
+                              : `${Math.round(Number(v))}%`}
                           </TableCell>
                         );
                       })}
@@ -181,12 +181,12 @@ export function KpiPivotHistory() {
                         if (kpi === "RECEITA") {
                           const sum = values.reduce((a, b) => a + b, 0);
                           return (
-                            <TableCell className="text-center font-semibold sticky right-0 bg-background">{currency.format(sum)}</TableCell>
+                            <TableCell className="text-center font-semibold sticky right-0 bg-background">{integerFormatter.format(sum)}</TableCell>
                           );
                         } else {
                           const avg = values.reduce((a, b) => a + b, 0) / values.length;
                           return (
-                            <TableCell className="text-center font-semibold sticky right-0 bg-background">{`${avg.toFixed(1)}%`}</TableCell>
+                            <TableCell className="text-center font-semibold sticky right-0 bg-background">{`${Math.round(avg)}%`}</TableCell>
                           );
                         }
                       })()}
@@ -211,13 +211,13 @@ export function KpiPivotHistory() {
                         const sum = values.reduce((a, b) => a + b, 0);
                         return (
                           <TableCell key={`footer-${d}`} className="text-center font-semibold">
-                            {currency.format(sum)}
+                            {integerFormatter.format(sum)}
                           </TableCell>
                         );
                       } else {
                         const avg = values.reduce((a, b) => a + b, 0) / values.length;
                         return (
-                          <TableCell key={`footer-${d}`} className="text-center font-semibold">{`${avg.toFixed(1)}%`}</TableCell>
+                          <TableCell key={`footer-${d}`} className="text-center font-semibold">{`${Math.round(avg)}%`}</TableCell>
                         );
                       }
                     })}
@@ -233,10 +233,10 @@ export function KpiPivotHistory() {
                       }
                       if (kpi === "RECEITA") {
                         const total = allValues.reduce((a, b) => a + b, 0);
-                        return <TableCell className="text-center font-semibold sticky right-0 bg-background">{currency.format(total)}</TableCell>;
+                        return <TableCell className="text-center font-semibold sticky right-0 bg-background">{integerFormatter.format(total)}</TableCell>;
                       } else {
                         const avg = allValues.reduce((a, b) => a + b, 0) / allValues.length;
-                        return <TableCell className="text-center font-semibold sticky right-0 bg-background">{`${avg.toFixed(1)}%`}</TableCell>;
+                        return <TableCell className="text-center font-semibold sticky right-0 bg-background">{`${Math.round(avg)}%`}</TableCell>;
                       }
                     })()}
                   </TableRow>
