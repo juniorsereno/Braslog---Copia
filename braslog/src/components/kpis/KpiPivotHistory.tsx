@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { api } from "~/trpc/react";
 import { Card, CardContent } from "~/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "~/components/ui/table";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -27,7 +27,9 @@ export function KpiPivotHistory() {
   const [clientId, setClientId] = useState<string | undefined>(undefined);
 
   // Buscar dados do mês
-  const { data, isFetching } = api.kpiEntry.getByMonth.useQuery({ month, clientId: clientId ?? undefined });
+  const { data, isFetching } = api.kpiEntry.getByMonth.useQuery({ month, clientId: clientId ?? undefined }, {
+    placeholderData: (prev) => prev,
+  });
   const entries = data?.entries ?? [];
 
   // Buscar clientes para linhas (sempre todos para mostrar '-')
@@ -64,6 +66,8 @@ export function KpiPivotHistory() {
     }
     return map as Record<KpiKey, Record<string, Record<number, number>>>;
   }, [entries]);
+
+  const currency = useMemo(() => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }), []);
 
   const monthLabel = useMemo(() => {
     const safe = typeof month === 'string' ? month : '';
@@ -124,7 +128,12 @@ export function KpiPivotHistory() {
 
       {isFetching && (
         <Card>
-          <CardContent className="pt-6">Carregando dados...</CardContent>
+          <CardContent className="pt-6">
+            <div className="space-y-3">
+              <div className="h-4 w-1/3 bg-muted animate-pulse rounded" />
+              <div className="h-40 w-full bg-muted animate-pulse rounded" />
+            </div>
+          </CardContent>
         </Card>
       )}
 
@@ -146,6 +155,7 @@ export function KpiPivotHistory() {
                       {daysInMonth.map((d) => (
                       <TableHead key={d} className="text-center sticky top-0 bg-background z-10">{d}</TableHead>
                     ))}
+                    <TableHead className="text-center sticky right-0 bg-background z-10">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -160,14 +170,82 @@ export function KpiPivotHistory() {
                             {v === undefined
                               ? "-"
                               : kpi === "RECEITA"
-                              ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
+                              ? currency.format(v)
                               : `${Number(v).toFixed(1)}%`}
                           </TableCell>
                         );
                       })}
+                      {/* Total por cliente (mês) */}
+                      {(() => {
+                        const values = daysInMonth
+                          .map((d) => kpiMap[kpi]?.[c.id]?.[d])
+                          .filter((v): v is number => typeof v === "number");
+                        if (values.length === 0) {
+                          return <TableCell className="text-center sticky right-0 bg-background">-</TableCell>;
+                        }
+                        if (kpi === "RECEITA") {
+                          const sum = values.reduce((a, b) => a + b, 0);
+                          return (
+                            <TableCell className="text-center font-semibold sticky right-0 bg-background">{currency.format(sum)}</TableCell>
+                          );
+                        } else {
+                          const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                          return (
+                            <TableCell className="text-center font-semibold sticky right-0 bg-background">{`${avg.toFixed(1)}%`}</TableCell>
+                          );
+                        }
+                      })()}
                     </TableRow>
                   ))}
                 </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell className="font-semibold">
+                      {kpi === "RECEITA" ? "Total" : "Média"}
+                    </TableCell>
+                    {daysInMonth.map((d) => {
+                      const values = clients
+                        .map((c) => kpiMap[kpi]?.[c.id]?.[d])
+                        .filter((v): v is number => typeof v === "number");
+                      if (values.length === 0) {
+                        return (
+                          <TableCell key={`footer-${d}`} className="text-center">-</TableCell>
+                        );
+                      }
+                      if (kpi === "RECEITA") {
+                        const sum = values.reduce((a, b) => a + b, 0);
+                        return (
+                          <TableCell key={`footer-${d}`} className="text-center font-semibold">
+                            {currency.format(sum)}
+                          </TableCell>
+                        );
+                      } else {
+                        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                        return (
+                          <TableCell key={`footer-${d}`} className="text-center font-semibold">{`${avg.toFixed(1)}%`}</TableCell>
+                        );
+                      }
+                    })}
+                    {/* Coluna total agregada (todo o mês) */}
+                    {(() => {
+                      const allValues = clients.flatMap((c) =>
+                        daysInMonth
+                          .map((d) => kpiMap[kpi]?.[c.id]?.[d])
+                          .filter((v): v is number => typeof v === "number")
+                      );
+                      if (allValues.length === 0) {
+                        return <TableCell className="text-center sticky right-0 bg-background">-</TableCell>;
+                      }
+                      if (kpi === "RECEITA") {
+                        const total = allValues.reduce((a, b) => a + b, 0);
+                        return <TableCell className="text-center font-semibold sticky right-0 bg-background">{currency.format(total)}</TableCell>;
+                      } else {
+                        const avg = allValues.reduce((a, b) => a + b, 0) / allValues.length;
+                        return <TableCell className="text-center font-semibold sticky right-0 bg-background">{`${avg.toFixed(1)}%`}</TableCell>;
+                      }
+                    })()}
+                  </TableRow>
+                </TableFooter>
               </Table>
             </div>
           </CardContent>

@@ -69,7 +69,7 @@ function LoginForm() {
   };
 
   return (
-    <Card className="shadow-2xl">
+    <Card className="shadow-2xl animate-in fade-in-50 zoom-in-95 duration-300">
       <CardHeader className="space-y-1 text-center">
         <div className="flex justify-center mb-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -137,7 +137,7 @@ function LoginForm() {
           
           <Button 
             type="submit" 
-            className="w-full" 
+            className="w-full transition-colors" 
             disabled={isLoading || !email || !password}
           >
             {isLoading ? (

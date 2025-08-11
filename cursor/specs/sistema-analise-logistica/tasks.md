@@ -249,14 +249,14 @@ Cada tarefa é projetada para ser executada por um agente de codificação, cons
     - Remover spinners dos inputs e posicionar ícones de ação sobrepostos nos campos
     - _Requisitos: 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 15. Implementar otimizações de performance para KPIs
+- [x] 15. Implementar otimizações de performance para KPIs
   - Adicionar cache do React Query para dados frequentemente acessados
   - Implementar lazy loading para listas grandes de clientes
   - Otimizar queries do banco com índices em campos de busca
   - Adicionar compressão de dados para requests grandes
   - _Requisitos: 8.1, 8.2, 8.3_
 
-- [ ] 16. Finalizar validação e tratamento de erros
+- [x] 16. Finalizar validação e tratamento de erros
   - Implementar validação client-side com feedback em tempo real
   - Criar mensagens de erro específicas para cada tipo de validação
   - Adicionar tratamento de erros de rede e timeout
@@ -276,7 +276,7 @@ Cada tarefa é projetada para ser executada por um agente de codificação, cons
   - _Requisitos: Todos os requisitos funcionais_
 
 - [ ] 18. Melhorias de UX e polimento (por épico)
-  - [ ] 18.1 UX para Épico 1: Animações de login e navegação
+  - [x] 18.1 UX para Épico 1: Animações de login e navegação
   - [ ] 18.2 UX para Épico 2: Interações suaves no CRUD de clientes
   - [ ] 18.3 UX para Épico 3: Experiência otimizada de entrada de dados
   - _Requisitos: 8.1, 8.5_

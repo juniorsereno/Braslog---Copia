@@ -75,7 +75,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar>
+    <Sidebar className="transition-[width] duration-300 ease-in-out">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-4 py-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
@@ -143,7 +143,7 @@ export function AppSidebar() {
                   size="lg"
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar className="h-8 w-8 rounded-lg transition-transform data-[state=open]:scale-95">
                     <AvatarFallback className="rounded-lg">
                       {session?.user?.email?.charAt(0).toUpperCase() ?? "U"}
                     </AvatarFallback>

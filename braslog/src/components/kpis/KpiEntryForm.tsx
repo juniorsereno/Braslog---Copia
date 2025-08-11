@@ -6,7 +6,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "~/components/ui/table";
 import { useErrorHandler, useMutationHandlers } from "~/hooks/use-error-handler";
 import { type KpiFormData } from "~/lib/validations/kpi";
 import { Undo2, Trash2 } from "lucide-react";
@@ -102,6 +102,30 @@ export function KpiEntryForm({ defaultDate, onSaved, onCancel }: Props) {
   const topPad = virtualizationEnabled ? startIndex * rowHeight : 0;
   const bottomPad = virtualizationEnabled ? Math.max(0, totalRows * rowHeight - endIndex * rowHeight) : 0;
 
+  // Resumo (Total receita, médias percentuais)
+  const fmtCurrency = useMemo(() =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }),
+  []);
+  const summary = useMemo(() => {
+    const entries = formData.entries;
+    const receitaSum = entries.reduce((acc, e) => acc + (typeof e.receita === "number" ? e.receita : 0), 0);
+    const avgOf = (key: KpiKey) => {
+      const values = entries
+        .map((e) => e[key])
+        .filter((v): v is number => typeof v === "number");
+      if (values.length === 0) return undefined;
+      const total = values.reduce((a, b) => a + b, 0);
+      return total / values.length;
+    };
+    return {
+      receitaSum,
+      onTimeAvg: avgOf("onTime"),
+      ocupacaoAvg: avgOf("ocupacao"),
+      terceiroAvg: avgOf("terceiro"),
+      disponibilidadeAvg: avgOf("disponibilidade"),
+    };
+  }, [formData.entries]);
+
   // Rehidratar o formulário quando clientes ou entradas mudarem
   useEffect(() => {
     const baseEntries = clients.map((c) => ({ clientId: c.id }));
@@ -145,7 +169,12 @@ export function KpiEntryForm({ defaultDate, onSaved, onCancel }: Props) {
     field: KpiKey,
     value: string,
   ) => {
-    const numeric = value === "" ? undefined : Number(value);
+    let numeric = value === "" ? undefined : Number(value);
+    // Máscara/normalização: clamp 0-100 para percentuais
+    if (numeric !== undefined && field !== "receita") {
+      if (Number.isNaN(numeric)) numeric = undefined;
+      else numeric = Math.max(0, Math.min(100, numeric));
+    }
     setFormData((prev) => ({
       ...prev,
       entries: prev.entries.map((e) =>
@@ -285,7 +314,7 @@ export function KpiEntryForm({ defaultDate, onSaved, onCancel }: Props) {
                           <TableCell>
                             <div className="relative">
                               <Input
-                                className="no-spinner pr-10"
+                                className="no-spinner pr-16"
                                 inputMode="decimal"
                                 type="number"
                                 step="0.01"
@@ -301,6 +330,7 @@ export function KpiEntryForm({ defaultDate, onSaved, onCancel }: Props) {
                                 canDelete={Boolean(entryIdMap[`${entry.clientId}:receita`])}
                                 overlay
                               />
+                              <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-muted-foreground">BRL</div>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -404,6 +434,7 @@ export function KpiEntryForm({ defaultDate, onSaved, onCancel }: Props) {
                 </TableRow>
               )}
             </TableBody>
+          {/* Removido footer de resumo: solicitado apenas para visão histórica */}
           </Table>
         </div>
 
