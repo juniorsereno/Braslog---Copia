@@ -146,3 +146,6 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(authMiddleware);
+
+// Re-export para uso centralizado de erros
+export { TRPCError };
