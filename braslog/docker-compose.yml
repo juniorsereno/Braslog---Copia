@@ -1,6 +1,4 @@
 # Docker Compose para Sistema de Análise Logística
-version: '3.8'
-
 services:
   # Aplicação principal
   app:
@@ -8,8 +6,6 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: braslog-app
-    ports:
-      - "3000:3000"
     environment:
       # Variáveis de ambiente da aplicação
       - NODE_ENV=production
@@ -31,9 +27,6 @@ services:
   nginx:
     image: nginx:alpine
     container_name: braslog-nginx
-    ports:
-      - "80:80"
-      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/ssl:ro
