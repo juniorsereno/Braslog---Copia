@@ -89,7 +89,7 @@ export const createTRPCRouter = t.router;
 const timingMiddleware = t.middleware(async ({ next, path }) => {
   const start = Date.now();
 
-  if (t._config.isDev) {
+  if (process.env.NODE_ENV === 'development') {
     // artificial delay in dev
     const waitMs = Math.floor(Math.random() * 400) + 100;
     await new Promise((resolve) => setTimeout(resolve, waitMs));
@@ -110,7 +110,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * If the user is not authenticated, it throws an UNAUTHORIZED error.
  */
 const authMiddleware = t.middleware(async ({ ctx, next }) => {
-  const effectiveUser = ctx.user ?? (ctx as any).session?.user ?? null;
+  const effectiveUser = ctx.user;
   if (!effectiveUser) {
     throw new TRPCError({
       code: "UNAUTHORIZED",

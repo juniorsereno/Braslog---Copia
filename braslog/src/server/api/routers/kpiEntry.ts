@@ -18,13 +18,24 @@ import {
 } from "~/lib/validations/kpi";
 
 // Helper function to convert Supabase data to KpiEntry
-function convertSupabaseToKpiEntry(entry: any): KpiEntry {
+type SupabaseKpiRow = {
+  id: string;
+  date: string;
+  client_id: string;
+  kpi_type: string;
+  kpi_value: string | number;
+  created_at: string;
+  updated_at: string;
+  clients?: { id: string; name: string; status: string } | null;
+};
+
+function convertSupabaseToKpiEntry(entry: SupabaseKpiRow): KpiEntry {
   return {
     id: entry.id,
     date: new Date(entry.date),
     clientId: entry.client_id,
     kpiType: entry.kpi_type as KpiType,
-    kpiValue: parseFloat(entry.kpi_value),
+    kpiValue: parseFloat(String(entry.kpi_value)),
     createdAt: new Date(entry.created_at),
     updatedAt: new Date(entry.updated_at),
     client: entry.clients ? {
