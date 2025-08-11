@@ -47,24 +47,19 @@ export function KpiPivotHistory() {
 
   // Mapear (kpiType -> clientId -> day -> value)
   const kpiMap = useMemo(() => {
-    const map: Partial<Record<KpiKey, Record<string, Record<number, number>>>> = {};
+    const map: Record<KpiKey, Record<string, Record<number, number>>> = {
+      RECEITA: {}, ON_TIME: {}, OCUPACAO: {}, TERCEIRO: {}, DISPONIBILIDADE: {}
+    };
     for (const e of entries) {
       const key = e.kpiType as KpiKey;
       const d = new Date(e.date);
       const day = d.getUTCDate();
-      if (!map[key]) {
-        map[key] = {} as Record<string, Record<number, number>>;
-      }
-      const byClientCandidate = map[key];
-      if (!byClientCandidate) {
-        continue;
-      }
-      const byClient: Record<string, Record<number, number>> = byClientCandidate as Record<string, Record<number, number>>;
+      const byClient = map[key];
       const currentRow = byClient[e.clientId] ?? {};
       currentRow[day] = e.kpiValue;
       byClient[e.clientId] = currentRow;
     }
-    return map as Record<KpiKey, Record<string, Record<number, number>>>;
+    return map;
   }, [entries]);
 
   const currency = useMemo(() => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }), []);

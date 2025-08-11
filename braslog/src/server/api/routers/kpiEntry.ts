@@ -92,12 +92,12 @@ export const kpiEntryRouter = createTRPCRouter({
           });
         }
 
-        const typedEntries = (entries ?? []).map((entry: any) => ({
+        const typedEntries = (entries ?? []).map((entry: SupabaseKpiRow) => ({
           id: entry.id,
           date: new Date(entry.date),
           clientId: entry.client_id,
           kpiType: entry.kpi_type as KpiType,
-          kpiValue: parseFloat(entry.kpi_value),
+          kpiValue: parseFloat(String(entry.kpi_value)),
           createdAt: new Date(entry.created_at),
           updatedAt: new Date(entry.updated_at),
         })) as KpiEntry[];
@@ -152,13 +152,13 @@ export const kpiEntryRouter = createTRPCRouter({
           });
         }
 
-        const typedEntry = entry as any;
+        const typedEntry = entry as unknown as SupabaseKpiRow;
         return {
           id: typedEntry.id,
           date: new Date(typedEntry.date),
           clientId: typedEntry.client_id,
           kpiType: typedEntry.kpi_type as KpiType,
-          kpiValue: parseFloat(typedEntry.kpi_value),
+          kpiValue: parseFloat(String(typedEntry.kpi_value)),
           createdAt: new Date(typedEntry.created_at),
           updatedAt: new Date(typedEntry.updated_at),
           client: typedEntry.clients ? {
@@ -362,13 +362,13 @@ export const kpiEntryRouter = createTRPCRouter({
           });
         }
 
-        const typedEntry = updatedEntry as any;
+        const typedEntry = updatedEntry as unknown as SupabaseKpiRow;
         return {
           id: typedEntry.id,
           date: new Date(typedEntry.date),
           clientId: typedEntry.client_id,
           kpiType: typedEntry.kpi_type as KpiType,
-          kpiValue: parseFloat(typedEntry.kpi_value),
+          kpiValue: parseFloat(String(typedEntry.kpi_value)),
           createdAt: new Date(typedEntry.created_at),
           updatedAt: new Date(typedEntry.updated_at),
           client: typedEntry.clients ? {
@@ -595,12 +595,12 @@ export const kpiEntryRouter = createTRPCRouter({
           });
         }
 
-        const typedEntries = (updatedEntries ?? []).map((entry: any) => ({
+        const typedEntries = (updatedEntries ?? []).map((entry: SupabaseKpiRow) => ({
           id: entry.id,
           date: new Date(entry.date),
           clientId: entry.client_id,
           kpiType: entry.kpi_type as KpiType,
-          kpiValue: parseFloat(entry.kpi_value),
+          kpiValue: parseFloat(String(entry.kpi_value)),
           createdAt: new Date(entry.created_at),
           updatedAt: new Date(entry.updated_at),
         })) as KpiEntry[];
@@ -749,7 +749,7 @@ export const kpiEntryRouter = createTRPCRouter({
           .select('kpi_type', { count: 'exact' })
           .order('kpi_type');
 
-        const kpiTypeCounts = (kpiTypeStats ?? []).reduce((acc: Record<string, number>, item: any) => {
+        const kpiTypeCounts = (kpiTypeStats ?? []).reduce((acc: Record<string, number>, item: { kpi_type: string }) => {
           acc[item.kpi_type] = (acc[item.kpi_type] || 0) + 1;
           return acc;
         }, {} as Record<string, number>);
@@ -813,20 +813,23 @@ export const kpiEntryRouter = createTRPCRouter({
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao buscar entradas do mês' });
       }
 
-      const typedEntries = (entries ?? []).map((entry: any) => ({
-        id: entry.id,
-        date: new Date(entry.date),
-        clientId: entry.client_id,
-        kpiType: entry.kpi_type as KpiType,
-        kpiValue: parseFloat(entry.kpi_value),
-        createdAt: new Date(entry.created_at),
-        updatedAt: new Date(entry.updated_at),
-        client: entry.clients ? {
-          id: entry.clients.id,
-          name: entry.clients.name,
-          status: entry.clients.status,
-        } : undefined,
-      })) as KpiEntry[];
+      const typedEntries = (entries ?? []).map((entry: unknown) => {
+        const row = entry as SupabaseKpiRow;
+        return {
+          id: row.id,
+          date: new Date(row.date),
+          clientId: row.client_id,
+          kpiType: row.kpi_type as KpiType,
+          kpiValue: parseFloat(String(row.kpi_value)),
+          createdAt: new Date(row.created_at),
+          updatedAt: new Date(row.updated_at),
+          client: row.clients ? {
+            id: row.clients.id,
+            name: row.clients.name,
+            status: row.clients.status,
+          } : undefined,
+        } as KpiEntry;
+      }) as KpiEntry[];
 
       return { entries: typedEntries };
     }),

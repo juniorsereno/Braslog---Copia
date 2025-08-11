@@ -311,32 +311,21 @@ export const convertFormDataToEntries = (formData: KpiFormData): CreateKpiEntry[
 export const convertEntriesToFormData = (entries: KpiEntry[], date: string): KpiFormData => {
   // Agrupar entradas por cliente
   const entriesByClient = entries.reduce((acc, entry) => {
-    if (!acc[entry.clientId]) {
-      acc[entry.clientId] = {
-        clientId: entry.clientId,
-      };
-    }
+    acc[entry.clientId] ??= { clientId: entry.clientId } as KpiFormEntry;
 
     // Mapear tipos de KPI para campos do formulário
-    const clientEntry = acc[entry.clientId];
-    if (clientEntry) {
-      switch (entry.kpiType) {
-        case "RECEITA":
-          clientEntry.receita = entry.kpiValue;
-          break;
-        case "ON_TIME":
-          clientEntry.onTime = entry.kpiValue;
-          break;
-        case "OCUPACAO":
-          clientEntry.ocupacao = entry.kpiValue;
-          break;
-        case "TERCEIRO":
-          clientEntry.terceiro = entry.kpiValue;
-          break;
-        case "DISPONIBILIDADE":
-          clientEntry.disponibilidade = entry.kpiValue;
-          break;
-      }
+    const clientEntry = acc[entry.clientId]!;
+    switch (entry.kpiType) {
+      case "RECEITA":
+        clientEntry.receita = entry.kpiValue; break;
+      case "ON_TIME":
+        clientEntry.onTime = entry.kpiValue; break;
+      case "OCUPACAO":
+        clientEntry.ocupacao = entry.kpiValue; break;
+      case "TERCEIRO":
+        clientEntry.terceiro = entry.kpiValue; break;
+      case "DISPONIBILIDADE":
+        clientEntry.disponibilidade = entry.kpiValue; break;
     }
 
     return acc;

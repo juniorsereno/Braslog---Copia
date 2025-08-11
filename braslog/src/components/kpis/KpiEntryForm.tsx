@@ -6,7 +6,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "~/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { useErrorHandler, useMutationHandlers } from "~/hooks/use-error-handler";
 import { type KpiFormData } from "~/lib/validations/kpi";
 import { Undo2, Trash2 } from "lucide-react";
@@ -41,7 +41,7 @@ export function KpiEntryForm({ defaultDate, onSaved, onCancel }: Props) {
       placeholderData: (prev) => prev,
     },
   );
-  const clients = clientsResp?.clients ?? [];
+  const clients = useMemo(() => clientsResp?.clients ?? [], [clientsResp]);
   const clientsById = useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
 
   // Buscar entradas existentes da data selecionada
@@ -103,28 +103,7 @@ export function KpiEntryForm({ defaultDate, onSaved, onCancel }: Props) {
   const bottomPad = virtualizationEnabled ? Math.max(0, totalRows * rowHeight - endIndex * rowHeight) : 0;
 
   // Resumo (Total receita, médias percentuais)
-  const fmtCurrency = useMemo(() =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }),
-  []);
-  const summary = useMemo(() => {
-    const entries = formData.entries;
-    const receitaSum = entries.reduce((acc, e) => acc + (typeof e.receita === "number" ? e.receita : 0), 0);
-    const avgOf = (key: KpiKey) => {
-      const values = entries
-        .map((e) => e[key])
-        .filter((v): v is number => typeof v === "number");
-      if (values.length === 0) return undefined;
-      const total = values.reduce((a, b) => a + b, 0);
-      return total / values.length;
-    };
-    return {
-      receitaSum,
-      onTimeAvg: avgOf("onTime"),
-      ocupacaoAvg: avgOf("ocupacao"),
-      terceiroAvg: avgOf("terceiro"),
-      disponibilidadeAvg: avgOf("disponibilidade"),
-    };
-  }, [formData.entries]);
+  // resumo removido (não utilizado no formulário)
 
   // Rehidratar o formulário quando clientes ou entradas mudarem
   useEffect(() => {
@@ -185,15 +164,15 @@ export function KpiEntryForm({ defaultDate, onSaved, onCancel }: Props) {
 
   const isDirtyCell = (clientId: string, field: KpiKey): boolean => {
     const current = formData.entries.find((e) => e.clientId === clientId);
-    const initial = initialFormRef.current.entries.find((e) => e.clientId === clientId);
+    const initial = initialFormRef.current.entries.find((e) => e.clientId === clientId) as Partial<Record<KpiKey, number>> | undefined;
     const curVal = current?.[field];
     const initVal = initial?.[field];
     return curVal !== initVal;
   };
 
   const revertCell = (clientId: string, field: KpiKey) => {
-    const initial = initialFormRef.current.entries.find((e) => e.clientId === clientId);
-    const initVal = initial ? (initial as any)[field] : undefined;
+    const initial = initialFormRef.current.entries.find((e) => e.clientId === clientId) as Partial<Record<KpiKey, number>> | undefined;
+    const initVal = initial ? initial[field] : undefined;
     setFormData((prev) => ({
       ...prev,
       entries: prev.entries.map((e) => (e.clientId === clientId ? { ...e, [field]: initVal } : e)),
