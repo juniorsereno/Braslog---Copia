@@ -173,7 +173,7 @@ export const GetKpiByMonthSchema = z.object({
   clientId: z
     .union([z.string().uuid(), z.null()])
     .optional()
-    .transform((v) => (v === null || v === undefined ? undefined : v)),
+    .transform((v) => v ?? undefined),
 });
 
 /**

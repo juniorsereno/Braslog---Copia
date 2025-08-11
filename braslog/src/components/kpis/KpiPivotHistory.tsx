@@ -30,7 +30,7 @@ export function KpiPivotHistory() {
   const { data, isFetching } = api.kpiEntry.getByMonth.useQuery({ month, clientId: clientId ?? undefined }, {
     placeholderData: (prev) => prev,
   });
-  const entries = data?.entries ?? [];
+  const entries = useMemo(() => data?.entries ?? [], [data?.entries]);
 
   // Buscar clientes para linhas (sempre todos para mostrar '-')
   const { data: clientsResp } = api.client.getAll.useQuery({ limit: 100, offset: 0 });

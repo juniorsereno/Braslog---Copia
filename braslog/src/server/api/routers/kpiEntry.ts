@@ -17,7 +17,7 @@ import {
   type KpiType,
 } from "~/lib/validations/kpi";
 
-// Helper function to convert Supabase data to KpiEntry
+// Tipagem auxiliar para linhas retornadas do Supabase
 type SupabaseKpiRow = {
   id: string;
   date: string;
@@ -28,23 +28,6 @@ type SupabaseKpiRow = {
   updated_at: string;
   clients?: { id: string; name: string; status: string } | null;
 };
-
-function convertSupabaseToKpiEntry(entry: SupabaseKpiRow): KpiEntry {
-  return {
-    id: entry.id,
-    date: new Date(entry.date),
-    clientId: entry.client_id,
-    kpiType: entry.kpi_type as KpiType,
-    kpiValue: parseFloat(String(entry.kpi_value)),
-    createdAt: new Date(entry.created_at),
-    updatedAt: new Date(entry.updated_at),
-    client: entry.clients ? {
-      id: entry.clients.id,
-      name: entry.clients.name,
-      status: entry.clients.status,
-    } : undefined,
-  };
-}
 
 export const kpiEntryRouter = createTRPCRouter({
   /**
@@ -247,13 +230,13 @@ export const kpiEntryRouter = createTRPCRouter({
           });
         }
 
-        const typedEntry = entry as any;
-        return {
+        const typedEntry = entry as unknown as SupabaseKpiRow;
+        const result: KpiEntry = {
           id: typedEntry.id,
           date: new Date(typedEntry.date),
           clientId: typedEntry.client_id,
           kpiType: typedEntry.kpi_type as KpiType,
-          kpiValue: parseFloat(typedEntry.kpi_value),
+          kpiValue: parseFloat(String(typedEntry.kpi_value)),
           createdAt: new Date(typedEntry.created_at),
           updatedAt: new Date(typedEntry.updated_at),
           client: {
@@ -261,7 +244,8 @@ export const kpiEntryRouter = createTRPCRouter({
             name: client.name,
             status: client.status,
           },
-        } as KpiEntry;
+        };
+        return result;
       } catch (error) {
         if (error instanceof TRPCError) {
           throw error;
@@ -328,7 +312,13 @@ export const kpiEntryRouter = createTRPCRouter({
         }
 
         // Preparar dados para atualização
-        const updatePayload: Record<string, any> = {};
+        type KpiUpdatePayload = Partial<{
+          date: string;
+          client_id: string;
+          kpi_type: string;
+          kpi_value: string;
+        }>;
+        const updatePayload: KpiUpdatePayload = {};
         if (updateData.date) updatePayload.date = updateData.date;
         if (updateData.clientId) updatePayload.client_id = updateData.clientId;
         if (updateData.kpiType) updatePayload.kpi_type = updateData.kpiType;
@@ -492,17 +482,20 @@ export const kpiEntryRouter = createTRPCRouter({
           .eq('date', date)
           .in('client_id', clientIds);
 
+        type ExistingEntryRow = { id: string; client_id: string; kpi_type: string; kpi_value: string };
         const existingMap = new Map<string, { id: string; value: number }>();
-        (existingEntries ?? []).forEach(entry => {
+        (existingEntries ?? []).forEach((entry: ExistingEntryRow) => {
           const key = `${entry.client_id}-${entry.kpi_type}`;
-          existingMap.set(key, { 
-            id: entry.id, 
-            value: parseFloat(entry.kpi_value) 
+          existingMap.set(key, {
+            id: entry.id,
+            value: parseFloat(entry.kpi_value),
           });
         });
 
-        const toInsert: any[] = [];
-        const toUpdate: any[] = [];
+        type InsertPayload = { date: string; client_id: string; kpi_type: string; kpi_value: string };
+        type UpdatePayload = { id: string; kpi_value: string };
+        const toInsert: InsertPayload[] = [];
+        const toUpdate: UpdatePayload[] = [];
         const toDelete: string[] = [];
 
         // Processar cada entrada
@@ -690,20 +683,25 @@ export const kpiEntryRouter = createTRPCRouter({
           });
         }
 
-        const typedEntries = (entries ?? []).map((entry: any) => ({
-          id: entry.id,
-          date: new Date(entry.date),
-          clientId: entry.client_id,
-          kpiType: entry.kpi_type as KpiType,
-          kpiValue: parseFloat(entry.kpi_value),
-          createdAt: new Date(entry.created_at),
-          updatedAt: new Date(entry.updated_at),
-          client: entry.clients ? {
-            id: entry.clients.id,
-            name: entry.clients.name,
-            status: entry.clients.status,
-          } : undefined,
-        })) as KpiEntry[];
+        const typedEntries = (entries ?? []).map((entry) => {
+          const row = entry as unknown as SupabaseKpiRow;
+          return {
+            id: row.id,
+            date: new Date(row.date),
+            clientId: row.client_id,
+            kpiType: row.kpi_type as KpiType,
+            kpiValue: parseFloat(String(row.kpi_value)),
+            createdAt: new Date(row.created_at),
+            updatedAt: new Date(row.updated_at),
+            client: row.clients
+              ? {
+                  id: row.clients.id,
+                  name: row.clients.name,
+                  status: row.clients.status,
+                }
+              : undefined,
+          } as KpiEntry;
+        });
 
         return {
           entries: typedEntries,
@@ -750,7 +748,7 @@ export const kpiEntryRouter = createTRPCRouter({
           .order('kpi_type');
 
         const kpiTypeCounts = (kpiTypeStats ?? []).reduce((acc: Record<string, number>, item: { kpi_type: string }) => {
-          acc[item.kpi_type] = (acc[item.kpi_type] || 0) + 1;
+          acc[item.kpi_type] = (acc[item.kpi_type] ?? 0) + 1;
           return acc;
         }, {} as Record<string, number>);
 
@@ -813,9 +811,9 @@ export const kpiEntryRouter = createTRPCRouter({
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao buscar entradas do mês' });
       }
 
-      const typedEntries = (entries ?? []).map((entry: unknown) => {
-        const row = entry as SupabaseKpiRow;
-        return {
+      const typedEntries: KpiEntry[] = (entries ?? []).map((entry) => {
+        const row = entry as unknown as SupabaseKpiRow;
+        const mapped: KpiEntry = {
           id: row.id,
           date: new Date(row.date),
           clientId: row.client_id,
@@ -823,13 +821,16 @@ export const kpiEntryRouter = createTRPCRouter({
           kpiValue: parseFloat(String(row.kpi_value)),
           createdAt: new Date(row.created_at),
           updatedAt: new Date(row.updated_at),
-          client: row.clients ? {
-            id: row.clients.id,
-            name: row.clients.name,
-            status: row.clients.status,
-          } : undefined,
-        } as KpiEntry;
-      }) as KpiEntry[];
+          client: row.clients
+            ? {
+                id: row.clients.id,
+                name: row.clients.name,
+                status: row.clients.status,
+              }
+            : undefined,
+        };
+        return mapped;
+      });
 
       return { entries: typedEntries };
     }),

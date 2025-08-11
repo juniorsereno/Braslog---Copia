@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DashboardLayout } from "~/components/dashboard-layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+// Removido import não utilizado do Card e variantes
 import { TrendingUp } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog";
