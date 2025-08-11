@@ -26,7 +26,7 @@ export const costCenterRouter = createTRPCRouter({
 
       let query = ctx.supabase
         .from('cost_centers')
-        .select('id, name, status, created_at, updated_at', { count: 'exact' });
+        .select('id, name, status, created_at, updated_at, clients:clients(count)', { count: 'exact' });
 
       if (status) query = query.eq('status', status);
       if (search && search.trim().length > 0) query = query.ilike('name', `%${search.trim()}%`);
@@ -36,13 +36,18 @@ export const costCenterRouter = createTRPCRouter({
       const { data, count, error } = await query;
       if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao buscar centros de custo' });
 
-      const items: CostCenter[] = (data ?? []).map((cc: SupabaseCostCenter) => ({
-        id: cc.id,
-        name: cc.name,
-        status: cc.status as 'ATIVO' | 'INATIVO',
-        createdAt: new Date(cc.created_at),
-        updatedAt: new Date(cc.updated_at),
-      }));
+      const items: CostCenter[] = (data ?? []).map((row: any) => {
+        const cc = row as SupabaseCostCenter & { clients?: Array<{ count: number }> };
+        const clientCount = Array.isArray((cc as any).clients) && (cc as any).clients[0]?.count ? Number((cc as any).clients[0].count) : 0;
+        return {
+          id: cc.id,
+          name: cc.name,
+          status: cc.status as 'ATIVO' | 'INATIVO',
+          createdAt: new Date(cc.created_at),
+          updatedAt: new Date(cc.updated_at),
+          clientCount,
+        } satisfies CostCenter;
+      });
 
       return { costCenters: items, totalCount: count ?? 0, hasMore: offset + limit < (count ?? 0) };
     }),

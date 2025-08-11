@@ -94,6 +94,7 @@ function CostCenterListComponent({ onEdit }: CostCenterListProps) {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Clientes</TableHead>
               <TableHead>Criado em</TableHead>
               <TableHead>Atualizado em</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -134,6 +135,7 @@ function CostCenterListComponent({ onEdit }: CostCenterListProps) {
                 <TableRow key={cc.id}>
                   <TableCell className="font-medium">{cc.name}</TableCell>
                   <TableCell>{getStatusBadge(cc.status as any)}</TableCell>
+                  <TableCell>{typeof cc.clientCount === 'number' ? cc.clientCount : '-'}</TableCell>
                   <TableCell>{formatDate(cc.createdAt)}</TableCell>
                   <TableCell>{formatDate(cc.updatedAt)}</TableCell>
                   <TableCell>

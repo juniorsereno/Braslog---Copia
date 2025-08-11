@@ -40,6 +40,7 @@ export type CostCenter = {
   status: z.infer<typeof CostCenterStatusEnum>;
   createdAt: Date;
   updatedAt: Date;
+  clientCount?: number;
 };
 
 export const CostCenterValidationMessages = {
