@@ -7,7 +7,6 @@ services:
       dockerfile: Dockerfile
       args:
         - npm_config_loglevel=error
-    container_name: braslog-app
     environment:
       # Variáveis de ambiente da aplicação
       - NODE_ENV=production
