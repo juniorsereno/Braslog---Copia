@@ -1,4 +1,14 @@
 import { TRPCError, type createTRPCContext } from "~/server/api/trpc";
+import type {
+  GetKpiEntriesByDate,
+  GetKpiEntryById,
+  CreateKpiEntry as CreateKpiEntryInput,
+  UpdateKpiEntry as UpdateKpiEntryInput,
+  DeleteKpiEntry as DeleteKpiEntryInput,
+  UpsertKpiEntries as UpsertKpiEntriesInput,
+  ListKpiEntries as ListKpiEntriesInput,
+  GetKpiByMonth as GetKpiByMonthInput,
+} from "~/lib/validations/kpi";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import {
   CreateKpiEntrySchema,
@@ -35,7 +45,7 @@ export const kpiEntryRouter = createTRPCRouter({
    */
   getByDate: protectedProcedure
     .input(GetKpiEntriesByDateSchema)
-    .query(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: import("~/lib/validations/kpi").GetKpiEntriesByDate }) => {
+    .query(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: GetKpiEntriesByDate }) => {
       try {
         const { date, clientId, kpiType } = input;
 
@@ -107,7 +117,7 @@ export const kpiEntryRouter = createTRPCRouter({
    */
   getById: protectedProcedure
     .input(GetKpiEntryByIdSchema)
-    .query(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: import("~/lib/validations/kpi").GetKpiEntryById }) => {
+    .query(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: GetKpiEntryById }) => {
       try {
         const { data: entry, error } = await ctx.supabase
           .from('kpi_entries')
@@ -168,7 +178,7 @@ export const kpiEntryRouter = createTRPCRouter({
    */
   create: protectedProcedure
     .input(CreateKpiEntrySchema)
-    .mutation(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: import("~/lib/validations/kpi").CreateKpiEntry }) => {
+    .mutation(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: CreateKpiEntryInput }) => {
       try {
         // Validar valor baseado no tipo de KPI
         validateKpiValue(input.kpiType, input.kpiValue);
@@ -266,7 +276,7 @@ export const kpiEntryRouter = createTRPCRouter({
    */
   update: protectedProcedure
     .input(UpdateKpiEntrySchema)
-    .mutation(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: import("~/lib/validations/kpi").UpdateKpiEntry }) => {
+    .mutation(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: UpdateKpiEntryInput }) => {
       try {
         const { id, ...updateData } = input;
 
@@ -395,7 +405,7 @@ export const kpiEntryRouter = createTRPCRouter({
    */
   delete: protectedProcedure
     .input(DeleteKpiEntrySchema)
-    .mutation(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: import("~/lib/validations/kpi").DeleteKpiEntry }) => {
+    .mutation(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: DeleteKpiEntryInput }) => {
       try {
         // Verificar se a entrada existe
         const existingForDeleteRes = await ctx.supabase
@@ -459,7 +469,7 @@ export const kpiEntryRouter = createTRPCRouter({
    */
   upsertMany: protectedProcedure
     .input(UpsertKpiEntriesSchema)
-    .mutation(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: import("~/lib/validations/kpi").UpsertKpiEntries }) => {
+    .mutation(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: UpsertKpiEntriesInput }) => {
       try {
         const { date, entries } = input;
         
@@ -644,7 +654,7 @@ export const kpiEntryRouter = createTRPCRouter({
    */
   list: protectedProcedure
     .input(ListKpiEntriesSchema)
-    .query(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: import("~/lib/validations/kpi").ListKpiEntries }) => {
+    .query(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: ListKpiEntriesInput }) => {
       try {
         const { startDate, endDate, clientId, kpiType, limit, offset } = input;
 
@@ -701,7 +711,7 @@ export const kpiEntryRouter = createTRPCRouter({
         }
 
         const typedEntries = (entries ?? []).map((entry: unknown) => {
-          const row = entry as unknown as SupabaseKpiRow;
+          const row: SupabaseKpiRow = entry as SupabaseKpiRow;
           return {
             id: row.id,
             date: new Date(row.date),
@@ -790,7 +800,7 @@ export const kpiEntryRouter = createTRPCRouter({
    */
   getByMonth: protectedProcedure
     .input(GetKpiByMonthSchema)
-    .query(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: import("~/lib/validations/kpi").GetKpiByMonth }) => {
+    .query(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: GetKpiByMonthInput }) => {
       const { month, clientId } = input;
       const start = `${month}-01`;
       // calcular último dia real do mês para evitar datas inválidas (ex: 2025-06-31)
@@ -829,7 +839,7 @@ export const kpiEntryRouter = createTRPCRouter({
       }
 
       const typedEntries: KpiEntry[] = (entries ?? []).map((entry: unknown) => {
-        const row = entry as unknown as SupabaseKpiRow;
+        const row: SupabaseKpiRow = entry as SupabaseKpiRow;
         const mapped: KpiEntry = {
           id: row.id,
           date: new Date(row.date),
