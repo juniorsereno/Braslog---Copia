@@ -71,6 +71,15 @@ function ClientListComponent({ onClientSelect, selectable = false }: ClientListP
     },
   );
 
+  // Buscar centros de custo para exibir o nome na lista de clientes
+  const { data: costCentersData } = api.costCenter.getAll.useQuery(
+    { limit: 100, offset: 0 },
+    { refetchOnWindowFocus: false, staleTime: 5 * 60 * 1000 },
+  );
+  const costCenterIdToName = new Map<string, string>(
+    (costCentersData?.costCenters ?? []).map((cc) => [cc.id, cc.name]),
+  );
+
   // Reset da página quando filtros mudam
   const resetPage = () => setCurrentPage(0);
 
@@ -218,6 +227,8 @@ function ClientListComponent({ onClientSelect, selectable = false }: ClientListP
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Centro de Custo</TableHead>
+              <TableHead>Exibir no Histórico</TableHead>
               <TableHead>Criado em</TableHead>
               <TableHead>Atualizado em</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -278,6 +289,12 @@ function ClientListComponent({ onClientSelect, selectable = false }: ClientListP
                 >
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>{getStatusBadge(client.status)}</TableCell>
+                  <TableCell>
+                    {client.costCenterId
+                      ? (costCenterIdToName.get(client.costCenterId) ?? "-")
+                      : "-"}
+                  </TableCell>
+                  <TableCell>{client.isKeyAccount ? "Sim" : "Não"}</TableCell>
                   <TableCell>{formatDate(client.createdAt)}</TableCell>
                   <TableCell>{formatDate(client.updatedAt)}</TableCell>
                   <TableCell>

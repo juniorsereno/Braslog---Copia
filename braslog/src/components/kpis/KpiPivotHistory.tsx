@@ -33,9 +33,9 @@ export function KpiPivotHistory() {
   const entries = useMemo(() => data?.entries ?? [], [data?.entries]);
 
   // Buscar clientes para linhas (sempre todos para mostrar '-')
-  const { data: clientsResp } = api.client.getAll.useQuery({ limit: 1000, offset: 0 });
+  const { data: clientsResp, error: clientsError } = api.client.getAll.useQuery({ limit: 100, offset: 0 }, { refetchOnWindowFocus: false });
   const clients = (clientsResp?.clients ?? []).sort((a, b) => a.name.localeCompare(b.name));
-  const { data: costCentersResp } = api.costCenter.getAll.useQuery({ limit: 1000, offset: 0 });
+  const { data: costCentersResp, error: costCentersError } = api.costCenter.getAll.useQuery({ limit: 100, offset: 0 }, { refetchOnWindowFocus: false });
   const costCenters = (costCentersResp?.costCenters ?? []).sort((a, b) => a.name.localeCompare(b.name));
 
   // Extrair todos os dias do mês para colunas (1..N)
@@ -134,7 +134,13 @@ export function KpiPivotHistory() {
         </Card>
       )}
 
-      {!isFetching && entries.length === 0 && (
+      {((clientsError || costCentersError) && (
+        <Card>
+          <CardContent className="pt-6 text-destructive">Erro ao carregar dados de apoio. Atualize a página e tente novamente.</CardContent>
+        </Card>
+      )) || null}
+
+      {!isFetching && entries.length === 0 && !clientsError && !costCentersError && (
         <Card>
           <CardContent className="pt-6 text-muted-foreground">Nenhum lançamento encontrado para {monthLabel}.</CardContent>
         </Card>
