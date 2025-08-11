@@ -9,6 +9,7 @@ export default tseslint.config(
   {
     ignores: [".next"],
   },
+  // Garantir carregamento do plugin do Next no ambiente de build
   ...compat.extends("next/core-web-vitals"),
   {
     files: ["**/*.ts", "**/*.tsx"],
@@ -43,6 +44,9 @@ export default tseslint.config(
       parserOptions: {
         projectService: true,
       },
+    },
+    plugins: {
+      "@next/next": await import("@next/eslint-plugin-next").then(m => m.default ?? m),
     },
   },
 );

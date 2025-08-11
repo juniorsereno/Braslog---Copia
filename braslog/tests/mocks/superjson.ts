@@ -1,6 +1,9 @@
+type Serializable = unknown;
+type Payload = { json: unknown };
+
 export default {
-  serialize: (data) => ({ json: data, meta: {} }),
-  deserialize: (payload) => payload.json,
+  serialize: (data: Serializable) => ({ json: data, meta: {} as Record<string, never> }),
+  deserialize: (payload: Payload) => payload.json,
 };
 
 

@@ -2,7 +2,7 @@
 # Multi-stage build para otimização de produção
 
 # Stage 1: Base image com Node.js
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Instalar dependências necessárias
 RUN apk add --no-cache libc6-compat
