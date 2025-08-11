@@ -13,8 +13,12 @@ COPY package.json package-lock.json* ./
 
 # Stage 2: Instalar dependências
 FROM base AS deps
-# Instalar dependências (sem scripts para evitar falhas de postinstall durante build)
-RUN npm ci --ignore-scripts --no-audit --no-fund
+# Instalar dependências (usa npm ci se houver package-lock, senão fallback para npm install)
+RUN if [ -f package-lock.json ]; then \
+      npm ci --ignore-scripts --no-audit --no-fund; \
+    else \
+      npm install --ignore-scripts --no-audit --no-fund; \
+    fi
 
 # Stage 3: Build da aplicação
 FROM base AS builder
