@@ -13,8 +13,8 @@ COPY package.json package-lock.json* ./
 
 # Stage 2: Instalar dependências
 FROM base AS deps
-# Instalar dependências de produção e desenvolvimento
-RUN npm ci
+# Instalar dependências (sem scripts para evitar falhas de postinstall durante build)
+RUN npm ci --ignore-scripts --no-audit --no-fund
 
 # Stage 3: Build da aplicação
 FROM base AS builder
@@ -26,7 +26,7 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SKIP_ENV_VALIDATION=1
 
-# Gerar cliente Prisma
+# Gerar cliente Prisma (scripts habilitados apenas aqui)
 RUN npx prisma generate
 
 # Build da aplicação Next.js

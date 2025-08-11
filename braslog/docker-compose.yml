@@ -7,12 +7,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - npm_config_loglevel=error
     container_name: braslog-app
     ports:
       - "3000:3000"
     environment:
       # Variáveis de ambiente da aplicação
       - NODE_ENV=production
+      - SKIP_ENV_VALIDATION=1
       - DATABASE_URL=${DATABASE_URL}
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
