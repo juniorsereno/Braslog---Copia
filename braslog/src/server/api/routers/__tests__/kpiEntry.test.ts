@@ -10,9 +10,7 @@ const mockSupabaseClient = {
 
 const mockContext = {
   supabase: mockSupabaseClient,
-  session: {
-    user: { id: 'test-user-id', email: 'test@example.com' },
-  },
+  user: { id: 'test-user-id', email: 'test@example.com' },
 };
 
 // Mock dos dados de teste

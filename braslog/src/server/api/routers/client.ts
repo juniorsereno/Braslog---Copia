@@ -12,10 +12,12 @@ import {
 } from "~/lib/validations/client";
 
 // Tipos para dados do Supabase
-interface SupabaseClient {
+  interface SupabaseClient {
   id: string;
   name: string;
   status: string;
+    cost_center_id?: string | null;
+    is_key_account?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -33,7 +35,7 @@ export const clientRouter = createTRPCRouter({
         // Construir query usando Supabase client
         let query = ctx.supabase
           .from('clients')
-          .select('id, name, status, created_at, updated_at', { count: 'exact' });
+          .select('id, name, status, cost_center_id, is_key_account, created_at, updated_at', { count: 'exact' });
 
         // Aplicar filtros
         if (status) {
@@ -65,6 +67,8 @@ export const clientRouter = createTRPCRouter({
             id: client.id,
             name: client.name,
             status: client.status as 'ATIVO' | 'INATIVO',
+            costCenterId: client.cost_center_id ?? null,
+            isKeyAccount: Boolean(client.is_key_account),
             createdAt: new Date(client.created_at),
             updatedAt: new Date(client.updated_at),
           })) as Client[],
@@ -89,7 +93,7 @@ export const clientRouter = createTRPCRouter({
       try {
         const { data: client, error } = await ctx.supabase
           .from('clients')
-          .select('id, name, status, created_at, updated_at')
+          .select('id, name, status, cost_center_id, is_key_account, created_at, updated_at')
           .eq('id', input.id)
           .single();
 
@@ -105,6 +109,8 @@ export const clientRouter = createTRPCRouter({
           id: typedClient.id,
           name: typedClient.name,
           status: typedClient.status as 'ATIVO' | 'INATIVO',
+          costCenterId: typedClient.cost_center_id ?? null,
+          isKeyAccount: Boolean(typedClient.is_key_account),
           createdAt: new Date(typedClient.created_at),
           updatedAt: new Date(typedClient.updated_at),
         } as Client;
@@ -148,8 +154,10 @@ export const clientRouter = createTRPCRouter({
           .insert({
             name: input.name,
             status: input.status,
+            cost_center_id: input.costCenterId ?? null,
+            is_key_account: input.isKeyAccount ?? false,
           })
-          .select('id, name, status, created_at, updated_at')
+          .select('id, name, status, cost_center_id, is_key_account, created_at, updated_at')
           .single();
 
         if (error || !client) {
@@ -164,6 +172,8 @@ export const clientRouter = createTRPCRouter({
           id: typedClient.id,
           name: typedClient.name,
           status: typedClient.status as 'ATIVO' | 'INATIVO',
+          costCenterId: typedClient.cost_center_id ?? null,
+          isKeyAccount: Boolean(typedClient.is_key_account),
           createdAt: new Date(typedClient.created_at),
           updatedAt: new Date(typedClient.updated_at),
         } as Client;
@@ -192,7 +202,7 @@ export const clientRouter = createTRPCRouter({
         // Verificar se o cliente existe
         const { data: existingClient } = await ctx.supabase
           .from('clients')
-          .select('id, name, status')
+          .select('id, name, status, cost_center_id, is_key_account')
           .eq('id', id)
           .single();
 
@@ -222,9 +232,14 @@ export const clientRouter = createTRPCRouter({
         // Atualizar o cliente
         const { data: updatedClient, error } = await ctx.supabase
           .from('clients')
-          .update(updateData)
+          .update({
+            name: updateData.name,
+            status: updateData.status,
+            cost_center_id: updateData.costCenterId ?? null,
+            is_key_account: updateData.isKeyAccount ?? existingClient.is_key_account,
+          })
           .eq('id', id)
-          .select('id, name, status, created_at, updated_at')
+          .select('id, name, status, cost_center_id, is_key_account, created_at, updated_at')
           .single();
 
         if (error || !updatedClient) {
@@ -239,6 +254,8 @@ export const clientRouter = createTRPCRouter({
           id: typedClient.id,
           name: typedClient.name,
           status: typedClient.status as 'ATIVO' | 'INATIVO',
+          costCenterId: typedClient.cost_center_id ?? null,
+          isKeyAccount: Boolean(typedClient.is_key_account),
           createdAt: new Date(typedClient.created_at),
           updatedAt: new Date(typedClient.updated_at),
         } as Client;

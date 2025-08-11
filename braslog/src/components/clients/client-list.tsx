@@ -23,9 +23,11 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Skeleton } from "~/components/ui/skeleton";
-import { Plus, Search, Edit, Trash2, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Users, ChevronLeft, ChevronRight, Building2 } from "lucide-react";
 import { ClientModal } from "./client-modal";
 import { DeleteClientDialog } from "./delete-client-dialog";
+import { CostCenterModal } from "./cost-center-modal";
+import { CostCenterList } from "./cost-center-list";
 import type { Client, ClientStatus } from "~/lib/validations/client";
 
 interface ClientListProps {
@@ -41,6 +43,7 @@ function ClientListComponent({ onClientSelect, selectable = false }: ClientListP
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deletingClient, setDeletingClient] = useState<Client | null>(null);
+  const [isCostCenterModalOpen, setIsCostCenterModalOpen] = useState(false);
 
   const itemsPerPage = 20;
 
@@ -131,16 +134,22 @@ function ClientListComponent({ onClientSelect, selectable = false }: ClientListP
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold tracking-tight">
-            Gerenciamento de Clientes
+            Gerenciar Clientes e Centros de Custo
           </h2>
           <p className="text-sm text-muted-foreground">
             Gerencie os clientes do sistema de análise logística
           </p>
         </div>
-        <Button onClick={handleCreateClient}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Cliente
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsCostCenterModalOpen(true)}>
+            <Building2 className="mr-2 h-4 w-4" />
+            Novo Centro de Custo
+          </Button>
+          <Button onClick={handleCreateClient}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Cliente
+          </Button>
+        </div>
       </div>
 
       {/* Estatísticas */}
@@ -202,7 +211,7 @@ function ClientListComponent({ onClientSelect, selectable = false }: ClientListP
         </Select>
       </div>
 
-      {/* Tabela */}
+      {/* Tabela Clientes */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -302,6 +311,14 @@ function ClientListComponent({ onClientSelect, selectable = false }: ClientListP
         </Table>
       </div>
 
+      {/* Lista de Centros de Custo */}
+      <CostCenterList onEdit={(cc) => {
+        // Reaproveitar modal de cost center para edição
+        setIsCostCenterModalOpen(true);
+        // passaremos via prop do modal? Simplificamos: abrir modal em modo de criação por enquanto
+        // Para edição avançada, mover estado para acima e passar costCenter como prop
+      }} />
+
       {/* Paginação */}
       {clientsData && clientsData.totalCount > itemsPerPage && (
         <div className="flex items-center justify-between">
@@ -341,6 +358,11 @@ function ClientListComponent({ onClientSelect, selectable = false }: ClientListP
         isOpen={isModalOpen}
         onClose={handleModalClose}
         client={editingClient}
+      />
+
+      <CostCenterModal
+        isOpen={isCostCenterModalOpen}
+        onClose={() => setIsCostCenterModalOpen(false)}
       />
 
       <DeleteClientDialog

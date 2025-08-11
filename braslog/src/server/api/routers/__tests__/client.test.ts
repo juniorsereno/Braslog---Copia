@@ -43,7 +43,10 @@ describe('Client Router', () => {
       const result = CreateClientSchema.safeParse(validData);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toEqual(validData);
+        expect(result.data.name).toEqual(validData.name);
+        expect(result.data.status).toEqual(validData.status);
+        // New defaults may be present
+        expect(result.data).toMatchObject({ isKeyAccount: expect.any(Boolean) });
       }
     });
 

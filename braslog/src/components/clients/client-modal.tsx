@@ -33,11 +33,14 @@ import { Button } from "~/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import type { Client } from "~/lib/validations/client";
+import { api as trpc } from "~/trpc/react";
 
 // Schema simplificado para o formulário
 const ClientFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
   status: z.enum(["ATIVO", "INATIVO"]),
+  costCenterId: z.string().uuid().nullable().optional(),
+  isKeyAccount: z.boolean(),
 });
 
 type ClientFormData = z.infer<typeof ClientFormSchema>;
@@ -51,6 +54,7 @@ interface ClientModalProps {
 function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
   const [isValidatingName, setIsValidatingName] = useState(false);
   const { createMutationHandlers } = useMutationHandlers();
+  const { data: costCentersData } = trpc.costCenter.getAll.useQuery({ limit: 100, offset: 0 }, { staleTime: 5 * 60 * 1000 });
 
   const isEditing = !!client;
   const title = isEditing ? "Editar Cliente" : "Novo Cliente";
@@ -64,6 +68,8 @@ function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
     defaultValues: {
       name: "",
       status: "ATIVO",
+      costCenterId: null,
+      isKeyAccount: false,
     },
   });
 
@@ -74,11 +80,15 @@ function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
         form.reset({
           name: client.name,
           status: client.status,
+          costCenterId: client.costCenterId ?? null,
+          isKeyAccount: client.isKeyAccount ?? false,
         });
       } else {
         form.reset({
           name: "",
           status: "ATIVO",
+          costCenterId: null,
+          isKeyAccount: false,
         });
       }
     }
@@ -118,9 +128,16 @@ function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
           id: client.id,
           name: data.name,
           status: data.status,
+          costCenterId: data.costCenterId ?? undefined,
+          isKeyAccount: data.isKeyAccount,
         });
       } else {
-        await createMutation.mutateAsync(data);
+        await createMutation.mutateAsync({
+          name: data.name,
+          status: data.status,
+          costCenterId: data.costCenterId ?? undefined,
+          isKeyAccount: data.isKeyAccount,
+        });
       }
     } catch {
       // Error is handled by the mutation handlers
@@ -212,6 +229,60 @@ function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
                     <SelectContent>
                       <SelectItem value="ATIVO">Ativo</SelectItem>
                       <SelectItem value="INATIVO">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="costCenterId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Centro de Custo</FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(v === "__NONE__" ? null : v)}
+                    value={field.value ?? "__NONE__"}
+                    disabled={isLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um centro (opcional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="__NONE__">Sem Centro</SelectItem>
+                      {(costCentersData?.costCenters ?? []).map((cc) => (
+                        <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="isKeyAccount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mostrar individualmente no histórico</FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(v === 'true')}
+                    value={String(field.value)}
+                    disabled={isLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="false">Não</SelectItem>
+                      <SelectItem value="true">Sim</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

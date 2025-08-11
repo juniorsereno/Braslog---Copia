@@ -1,6 +1,7 @@
 import { authRouter } from "~/server/api/routers/auth";
 import { clientRouter } from "~/server/api/routers/client";
 import { kpiEntryRouter } from "~/server/api/routers/kpiEntry";
+import { costCenterRouter } from "~/server/api/routers/costCenter";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -11,6 +12,7 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 export const appRouter = createTRPCRouter({
   auth: authRouter,
   client: clientRouter,
+  costCenter: costCenterRouter,
   kpiEntry: kpiEntryRouter,
 });
 

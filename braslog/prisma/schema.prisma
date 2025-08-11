@@ -14,12 +14,16 @@ model Client {
     id        String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
     name      String     @unique @db.VarChar(100)
     status    ClientStatus @default(ATIVO)
+  isKeyAccount Boolean   @default(false) @map("is_key_account")
+  costCenterId String?   @map("cost_center_id") @db.Uuid
+  costCenter   CostCenter? @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
     createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
     updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
     entries   KpiEntry[]
 
     @@index([name])
     @@index([status])
+  @@index([costCenterId])
     @@map("clients")
 }
 
@@ -46,6 +50,17 @@ enum ClientStatus {
     INATIVO
 
     @@map("client_status")
+}
+
+model CostCenter {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name      String   @unique @db.VarChar(100)
+  status    ClientStatus @default(ATIVO)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  clients   Client[]
+
+  @@map("cost_centers")
 }
 
 enum KpiType {

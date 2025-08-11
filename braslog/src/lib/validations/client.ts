@@ -24,6 +24,8 @@ export const ClientBaseSchema = z.object({
       "Nome não pode conter apenas espaços em branco"
     ),
   status: ClientStatusEnum.default("ATIVO"),
+  costCenterId: z.string().uuid().optional().nullable(),
+  isKeyAccount: z.boolean().default(false),
 });
 
 /**
@@ -89,6 +91,8 @@ export type Client = {
   id: string;
   name: string;
   status: ClientStatus;
+  costCenterId?: string | null;
+  isKeyAccount: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
