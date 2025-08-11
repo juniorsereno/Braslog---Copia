@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, memo } from "react";
+import { useEffect, memo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "~/trpc/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMutationHandlers } from "~/hooks/use-error-handler";
 import {
   Dialog,
@@ -48,7 +49,7 @@ interface CostCenterModalProps {
 
 function CostCenterModalComponent({ isOpen, onClose, costCenter }: CostCenterModalProps) {
   const { createMutationHandlers } = useMutationHandlers();
-  const utils = api.useUtils?.() as any; // compat layer for invalidation
+  const queryClient = useQueryClient();
 
   const isEditing = !!costCenter;
   const title = isEditing ? "Editar Centro de Custo" : "Novo Centro de Custo";
@@ -76,9 +77,9 @@ function CostCenterModalComponent({ isOpen, onClose, costCenter }: CostCenterMod
     onSuccess: async () => {
       // invalidar listagens para aparecer nas seleções
       try {
-        if (utils?.costCenter?.getAll?.invalidate) {
-          await utils.costCenter.getAll.invalidate();
-        }
+        await queryClient.invalidateQueries({
+          predicate: (q) => Array.isArray(q.queryKey) && q.queryKey.some((k) => k === "costCenter" || k === "costCenter.getAll"),
+        });
       } catch {}
       form.reset();
       onClose();
@@ -89,9 +90,9 @@ function CostCenterModalComponent({ isOpen, onClose, costCenter }: CostCenterMod
     ...createMutationHandlers("Centro de custo atualizado com sucesso!"),
     onSuccess: async () => {
       try {
-        if (utils?.costCenter?.getAll?.invalidate) {
-          await utils.costCenter.getAll.invalidate();
-        }
+        await queryClient.invalidateQueries({
+          predicate: (q) => Array.isArray(q.queryKey) && q.queryKey.some((k) => k === "costCenter" || k === "costCenter.getAll"),
+        });
       } catch {}
       onClose();
     },

@@ -134,7 +134,7 @@ function CostCenterListComponent({ onEdit }: CostCenterListProps) {
               centers.map((cc) => (
                 <TableRow key={cc.id}>
                   <TableCell className="font-medium">{cc.name}</TableCell>
-                  <TableCell>{getStatusBadge(cc.status as any)}</TableCell>
+                  <TableCell>{getStatusBadge(cc.status)}</TableCell>
                   <TableCell>{typeof cc.clientCount === 'number' ? cc.clientCount : '-'}</TableCell>
                   <TableCell>{formatDate(cc.createdAt)}</TableCell>
                   <TableCell>{formatDate(cc.updatedAt)}</TableCell>

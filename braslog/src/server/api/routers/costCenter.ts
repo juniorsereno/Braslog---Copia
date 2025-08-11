@@ -18,6 +18,10 @@ interface SupabaseCostCenter {
   updated_at: string;
 }
 
+type SupabaseCostCenterWithClients = SupabaseCostCenter & {
+  clients?: Array<{ count: number }>;
+};
+
 export const costCenterRouter = createTRPCRouter({
   getAll: protectedProcedure
     .input(ListCostCentersSchema)
@@ -36,9 +40,9 @@ export const costCenterRouter = createTRPCRouter({
       const { data, count, error } = await query;
       if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao buscar centros de custo' });
 
-      const items: CostCenter[] = (data ?? []).map((row: any) => {
-        const cc = row as SupabaseCostCenter & { clients?: Array<{ count: number }> };
-        const clientCount = Array.isArray((cc as any).clients) && (cc as any).clients[0]?.count ? Number((cc as any).clients[0].count) : 0;
+      const items: CostCenter[] = (data ?? []).map((row) => {
+        const cc = row as SupabaseCostCenterWithClients;
+        const clientCount = Array.isArray(cc.clients) && typeof cc.clients[0]?.count === 'number' ? cc.clients[0].count : 0;
         return {
           id: cc.id,
           name: cc.name,

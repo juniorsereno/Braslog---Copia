@@ -7,7 +7,12 @@ const compat = new FlatCompat({
 
 export default tseslint.config(
   {
-    ignores: [".next"],
+    ignores: [
+      ".next",
+      "**/__tests__/**",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+    ],
   },
   // Garantir carregamento do plugin do Next no ambiente de build
   ...compat.extends("next/core-web-vitals"),

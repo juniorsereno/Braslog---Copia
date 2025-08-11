@@ -329,7 +329,7 @@ function ClientListComponent({ onClientSelect, selectable = false }: ClientListP
       </div>
 
       {/* Lista de Centros de Custo */}
-      <CostCenterList onEdit={(cc) => {
+      <CostCenterList onEdit={(_cc) => {
         // Reaproveitar modal de cost center para edição
         setIsCostCenterModalOpen(true);
         // passaremos via prop do modal? Simplificamos: abrir modal em modo de criação por enquanto

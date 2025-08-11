@@ -52,10 +52,19 @@ export const clientRouter = createTRPCRouter({
           .order('name', { ascending: true })
           .range(offset, offset + limit - 1);
 
-        const { data: clients, count: totalCount, error } = await query;
-
-        if (error) {
-          console.error("Supabase error:", error);
+        const result = await query;
+        const clientsData = (result.data ?? []) as Array<{
+          id: string;
+          name: string;
+          status: string;
+          cost_center_id: string | null;
+          is_key_account: boolean | null;
+          created_at: string;
+          updated_at: string;
+        }>;
+        const totalCount = result.count ?? 0;
+        if (result.error) {
+          console.error("Supabase error:", result.error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Erro ao buscar clientes",
@@ -63,7 +72,7 @@ export const clientRouter = createTRPCRouter({
         }
 
         return {
-          clients: (clients ?? []).map((client: SupabaseClient) => ({
+          clients: clientsData.map((client) => ({
             id: client.id,
             name: client.name,
             status: client.status as 'ATIVO' | 'INATIVO',
@@ -72,8 +81,8 @@ export const clientRouter = createTRPCRouter({
             createdAt: new Date(client.created_at),
             updatedAt: new Date(client.updated_at),
           })) as Client[],
-          totalCount: totalCount ?? 0,
-          hasMore: offset + limit < (totalCount ?? 0),
+          totalCount,
+          hasMore: offset + limit < totalCount,
         };
       } catch (error) {
         console.error("Error fetching clients:", error);
@@ -91,20 +100,20 @@ export const clientRouter = createTRPCRouter({
     .input(GetClientByIdSchema)
     .query(async ({ ctx, input }) => {
       try {
-        const { data: client, error } = await ctx.supabase
+        const res = await ctx.supabase
           .from('clients')
           .select('id, name, status, cost_center_id, is_key_account, created_at, updated_at')
           .eq('id', input.id)
-          .single();
+          .single<SupabaseClient>();
 
-        if (error || !client) {
+        if (res.error || !res.data) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: ClientValidationMessages.CLIENT_NOT_FOUND,
           });
         }
 
-        const typedClient = client as SupabaseClient;
+        const typedClient = res.data;
         return {
           id: typedClient.id,
           name: typedClient.name,
@@ -200,11 +209,12 @@ export const clientRouter = createTRPCRouter({
         const { id, ...updateData } = input;
 
         // Verificar se o cliente existe
-        const { data: existingClient } = await ctx.supabase
+        const existingRes = await ctx.supabase
           .from('clients')
           .select('id, name, status, cost_center_id, is_key_account')
           .eq('id', id)
-          .single();
+          .single<{ id: string; name: string; status: string; cost_center_id: string | null; is_key_account: boolean }>();
+        const existingClient: { id: string; name: string; status: string; cost_center_id: string | null; is_key_account: boolean } | null = existingRes.data ?? null;
 
         if (!existingClient) {
           throw new TRPCError({
@@ -215,13 +225,14 @@ export const clientRouter = createTRPCRouter({
 
         // Se está atualizando o nome, verificar unicidade
         if (updateData.name && updateData.name !== existingClient.name) {
-          const { data: clientWithSameName } = await ctx.supabase
+          const sameNameRes = await ctx.supabase
             .from('clients')
             .select('id')
             .eq('name', updateData.name)
-            .single();
+            .single<{ id: string }>();
 
-          if (clientWithSameName && clientWithSameName.id !== id) {
+          const sameName: { id: string } | null = sameNameRes.data ?? null;
+          if (sameName && sameName.id !== id) {
             throw new TRPCError({
               code: "CONFLICT",
               message: ClientValidationMessages.NAME_ALREADY_EXISTS,
@@ -230,7 +241,7 @@ export const clientRouter = createTRPCRouter({
         }
 
         // Atualizar o cliente
-        const { data: updatedClient, error } = await ctx.supabase
+        const updateRes = await ctx.supabase
           .from('clients')
           .update({
             name: updateData.name,
@@ -240,16 +251,16 @@ export const clientRouter = createTRPCRouter({
           })
           .eq('id', id)
           .select('id, name, status, cost_center_id, is_key_account, created_at, updated_at')
-          .single();
+          .single<SupabaseClient>();
 
-        if (error || !updatedClient) {
+        if (updateRes.error || !updateRes.data) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Erro ao atualizar cliente",
           });
         }
 
-        const typedClient = updatedClient as SupabaseClient;
+        const typedClient = updateRes.data;
         return {
           id: typedClient.id,
           name: typedClient.name,
@@ -353,7 +364,7 @@ export const clientRouter = createTRPCRouter({
           query = query.neq('id', excludeId);
         }
 
-        const { data: existingClient } = await query.single();
+        const { data: existingClient } = await query.single<{ id: string }>();
 
         return {
           isUnique: !existingClient,

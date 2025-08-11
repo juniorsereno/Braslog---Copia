@@ -134,11 +134,11 @@ export function KpiPivotHistory() {
         </Card>
       )}
 
-      {((clientsError || costCentersError) && (
+      {(clientsError ?? costCentersError) ? (
         <Card>
           <CardContent className="pt-6 text-destructive">Erro ao carregar dados de apoio. Atualize a página e tente novamente.</CardContent>
         </Card>
-      )) || null}
+      ) : null}
 
       {!isFetching && entries.length === 0 && !clientsError && !costCentersError && (
         <Card>
