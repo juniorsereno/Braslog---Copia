@@ -26,6 +26,12 @@ export const ClientBaseSchema = z.object({
   status: ClientStatusEnum.default("ATIVO"),
   costCenterId: z.string().uuid().optional().nullable(),
   isKeyAccount: z.boolean().default(false),
+  // Budgets/Metas por KPI
+  budgetReceita: z.number().min(0).nullable().optional(),
+  budgetOnTime: z.number().min(0).max(100).nullable().optional(),
+  budgetOcupacao: z.number().min(0).max(100).nullable().optional(),
+  budgetTerceiro: z.number().min(0).max(100).nullable().optional(),
+  budgetDisponibilidade: z.number().min(0).max(100).nullable().optional(),
 });
 
 /**
@@ -93,6 +99,11 @@ export type Client = {
   status: ClientStatus;
   costCenterId?: string | null;
   isKeyAccount: boolean;
+  budgetReceita?: number | null;
+  budgetOnTime?: number | null;
+  budgetOcupacao?: number | null;
+  budgetTerceiro?: number | null;
+  budgetDisponibilidade?: number | null;
   createdAt: Date;
   updatedAt: Date;
 };

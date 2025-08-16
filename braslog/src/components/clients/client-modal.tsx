@@ -41,6 +41,12 @@ const ClientFormSchema = z.object({
   status: z.enum(["ATIVO", "INATIVO"]),
   costCenterId: z.string().uuid().nullable().optional(),
   isKeyAccount: z.boolean(),
+  // Metas (budgets) por KPI
+  budgetReceita: z.coerce.number().min(0).nullable().optional(),
+  budgetOnTime: z.coerce.number().min(0).max(100).nullable().optional(),
+  budgetOcupacao: z.coerce.number().min(0).max(100).nullable().optional(),
+  budgetTerceiro: z.coerce.number().min(0).max(100).nullable().optional(),
+  budgetDisponibilidade: z.coerce.number().min(0).max(100).nullable().optional(),
 });
 
 type ClientFormData = z.infer<typeof ClientFormSchema>;
@@ -70,6 +76,11 @@ function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
       status: "ATIVO",
       costCenterId: null,
       isKeyAccount: false,
+      budgetReceita: null,
+      budgetOnTime: null,
+      budgetOcupacao: null,
+      budgetTerceiro: null,
+      budgetDisponibilidade: null,
     },
   });
 
@@ -82,6 +93,11 @@ function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
           status: client.status,
           costCenterId: client.costCenterId ?? null,
           isKeyAccount: client.isKeyAccount ?? false,
+          budgetReceita: client.budgetReceita ?? null,
+          budgetOnTime: client.budgetOnTime ?? null,
+          budgetOcupacao: client.budgetOcupacao ?? null,
+          budgetTerceiro: client.budgetTerceiro ?? null,
+          budgetDisponibilidade: client.budgetDisponibilidade ?? null,
         });
       } else {
         form.reset({
@@ -89,6 +105,11 @@ function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
           status: "ATIVO",
           costCenterId: null,
           isKeyAccount: false,
+          budgetReceita: null,
+          budgetOnTime: null,
+          budgetOcupacao: null,
+          budgetTerceiro: null,
+          budgetDisponibilidade: null,
         });
       }
     }
@@ -130,6 +151,11 @@ function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
           status: data.status,
           costCenterId: data.costCenterId ?? undefined,
           isKeyAccount: data.isKeyAccount,
+          budgetReceita: data.budgetReceita ?? null,
+          budgetOnTime: data.budgetOnTime ?? null,
+          budgetOcupacao: data.budgetOcupacao ?? null,
+          budgetTerceiro: data.budgetTerceiro ?? null,
+          budgetDisponibilidade: data.budgetDisponibilidade ?? null,
         });
       } else {
         await createMutation.mutateAsync({
@@ -137,6 +163,11 @@ function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
           status: data.status,
           costCenterId: data.costCenterId ?? undefined,
           isKeyAccount: data.isKeyAccount,
+          budgetReceita: data.budgetReceita ?? null,
+          budgetOnTime: data.budgetOnTime ?? null,
+          budgetOcupacao: data.budgetOcupacao ?? null,
+          budgetTerceiro: data.budgetTerceiro ?? null,
+          budgetDisponibilidade: data.budgetDisponibilidade ?? null,
         });
       }
     } catch {
@@ -289,6 +320,130 @@ function ClientModalComponent({ isOpen, onClose, client }: ClientModalProps) {
                 </FormItem>
               )}
             />
+
+            {/* Metas (Budgets) por KPI */}
+            <div className="col-span-1 md:col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="budgetReceita"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Meta Receita (R$)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          placeholder="0,00"
+                          value={field.value ?? ''}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="budgetOnTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Meta On Time (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          placeholder="%"
+                          value={field.value ?? ''}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="budgetOcupacao"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Meta Ocupação (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          placeholder="%"
+                          value={field.value ?? ''}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="budgetTerceiro"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Meta Terceiro (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          placeholder="%"
+                          value={field.value ?? ''}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="budgetDisponibilidade"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Meta Disponibilidade (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          placeholder="%"
+                          value={field.value ?? ''}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             <DialogFooter>
               <Button

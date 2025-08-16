@@ -18,6 +18,11 @@ import {
   status: string;
     cost_center_id?: string | null;
     is_key_account?: boolean;
+    budget_receita?: string | null;
+    budget_on_time?: string | null;
+    budget_ocupacao?: string | null;
+    budget_terceiro?: string | null;
+    budget_disponibilidade?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -35,7 +40,7 @@ export const clientRouter = createTRPCRouter({
         // Construir query usando Supabase client
         let query = ctx.supabase
           .from('clients')
-          .select('id, name, status, cost_center_id, is_key_account, created_at, updated_at', { count: 'exact' });
+          .select('id, name, status, cost_center_id, is_key_account, budget_receita, budget_on_time, budget_ocupacao, budget_terceiro, budget_disponibilidade, created_at, updated_at', { count: 'exact' });
 
         // Aplicar filtros
         if (status) {
@@ -53,15 +58,7 @@ export const clientRouter = createTRPCRouter({
           .range(offset, offset + limit - 1);
 
         const result = await query;
-        const clientsData = (result.data ?? []) as Array<{
-          id: string;
-          name: string;
-          status: string;
-          cost_center_id: string | null;
-          is_key_account: boolean | null;
-          created_at: string;
-          updated_at: string;
-        }>;
+        const clientsData = (result.data ?? []) as SupabaseClient[];
         const totalCount = result.count ?? 0;
         if (result.error) {
           console.error("Supabase error:", result.error);
@@ -78,6 +75,11 @@ export const clientRouter = createTRPCRouter({
             status: client.status as 'ATIVO' | 'INATIVO',
             costCenterId: client.cost_center_id ?? null,
             isKeyAccount: Boolean(client.is_key_account),
+            budgetReceita: client.budget_receita ? Number(client.budget_receita) : null,
+            budgetOnTime: client.budget_on_time ? Number(client.budget_on_time) : null,
+            budgetOcupacao: client.budget_ocupacao ? Number(client.budget_ocupacao) : null,
+            budgetTerceiro: client.budget_terceiro ? Number(client.budget_terceiro) : null,
+            budgetDisponibilidade: client.budget_disponibilidade ? Number(client.budget_disponibilidade) : null,
             createdAt: new Date(client.created_at),
             updatedAt: new Date(client.updated_at),
           })) as Client[],
@@ -102,7 +104,7 @@ export const clientRouter = createTRPCRouter({
       try {
         const res = await ctx.supabase
           .from('clients')
-          .select('id, name, status, cost_center_id, is_key_account, created_at, updated_at')
+          .select('id, name, status, cost_center_id, is_key_account, budget_receita, budget_on_time, budget_ocupacao, budget_terceiro, budget_disponibilidade, created_at, updated_at')
           .eq('id', input.id)
           .single<SupabaseClient>();
 
@@ -120,6 +122,11 @@ export const clientRouter = createTRPCRouter({
           status: typedClient.status as 'ATIVO' | 'INATIVO',
           costCenterId: typedClient.cost_center_id ?? null,
           isKeyAccount: Boolean(typedClient.is_key_account),
+          budgetReceita: typedClient.budget_receita ? Number(typedClient.budget_receita) : null,
+          budgetOnTime: typedClient.budget_on_time ? Number(typedClient.budget_on_time) : null,
+          budgetOcupacao: typedClient.budget_ocupacao ? Number(typedClient.budget_ocupacao) : null,
+          budgetTerceiro: typedClient.budget_terceiro ? Number(typedClient.budget_terceiro) : null,
+          budgetDisponibilidade: typedClient.budget_disponibilidade ? Number(typedClient.budget_disponibilidade) : null,
           createdAt: new Date(typedClient.created_at),
           updatedAt: new Date(typedClient.updated_at),
         } as Client;
@@ -165,8 +172,13 @@ export const clientRouter = createTRPCRouter({
             status: input.status,
             cost_center_id: input.costCenterId ?? null,
             is_key_account: input.isKeyAccount ?? false,
+            budget_receita: input.budgetReceita ?? null,
+            budget_on_time: input.budgetOnTime ?? null,
+            budget_ocupacao: input.budgetOcupacao ?? null,
+            budget_terceiro: input.budgetTerceiro ?? null,
+            budget_disponibilidade: input.budgetDisponibilidade ?? null,
           })
-          .select('id, name, status, cost_center_id, is_key_account, created_at, updated_at')
+          .select('id, name, status, cost_center_id, is_key_account, budget_receita, budget_on_time, budget_ocupacao, budget_terceiro, budget_disponibilidade, created_at, updated_at')
           .single();
 
         if (error || !client) {
@@ -183,6 +195,11 @@ export const clientRouter = createTRPCRouter({
           status: typedClient.status as 'ATIVO' | 'INATIVO',
           costCenterId: typedClient.cost_center_id ?? null,
           isKeyAccount: Boolean(typedClient.is_key_account),
+          budgetReceita: typedClient.budget_receita ? Number(typedClient.budget_receita) : null,
+          budgetOnTime: typedClient.budget_on_time ? Number(typedClient.budget_on_time) : null,
+          budgetOcupacao: typedClient.budget_ocupacao ? Number(typedClient.budget_ocupacao) : null,
+          budgetTerceiro: typedClient.budget_terceiro ? Number(typedClient.budget_terceiro) : null,
+          budgetDisponibilidade: typedClient.budget_disponibilidade ? Number(typedClient.budget_disponibilidade) : null,
           createdAt: new Date(typedClient.created_at),
           updatedAt: new Date(typedClient.updated_at),
         } as Client;
@@ -248,9 +265,14 @@ export const clientRouter = createTRPCRouter({
             status: updateData.status,
             cost_center_id: updateData.costCenterId ?? null,
             is_key_account: updateData.isKeyAccount ?? existingClient.is_key_account,
+            budget_receita: updateData.budgetReceita ?? null,
+            budget_on_time: updateData.budgetOnTime ?? null,
+            budget_ocupacao: updateData.budgetOcupacao ?? null,
+            budget_terceiro: updateData.budgetTerceiro ?? null,
+            budget_disponibilidade: updateData.budgetDisponibilidade ?? null,
           })
           .eq('id', id)
-          .select('id, name, status, cost_center_id, is_key_account, created_at, updated_at')
+          .select('id, name, status, cost_center_id, is_key_account, budget_receita, budget_on_time, budget_ocupacao, budget_terceiro, budget_disponibilidade, created_at, updated_at')
           .single<SupabaseClient>();
 
         if (updateRes.error || !updateRes.data) {
@@ -267,6 +289,11 @@ export const clientRouter = createTRPCRouter({
           status: typedClient.status as 'ATIVO' | 'INATIVO',
           costCenterId: typedClient.cost_center_id ?? null,
           isKeyAccount: Boolean(typedClient.is_key_account),
+          budgetReceita: typedClient.budget_receita ? Number(typedClient.budget_receita) : null,
+          budgetOnTime: typedClient.budget_on_time ? Number(typedClient.budget_on_time) : null,
+          budgetOcupacao: typedClient.budget_ocupacao ? Number(typedClient.budget_ocupacao) : null,
+          budgetTerceiro: typedClient.budget_terceiro ? Number(typedClient.budget_terceiro) : null,
+          budgetDisponibilidade: typedClient.budget_disponibilidade ? Number(typedClient.budget_disponibilidade) : null,
           createdAt: new Date(typedClient.created_at),
           updatedAt: new Date(typedClient.updated_at),
         } as Client;

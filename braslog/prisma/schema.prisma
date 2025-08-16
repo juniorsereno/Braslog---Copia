@@ -17,6 +17,12 @@ model Client {
   isKeyAccount Boolean   @default(false) @map("is_key_account")
   costCenterId String?   @map("cost_center_id") @db.Uuid
   costCenter   CostCenter? @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+    // Budgets/Metas por KPI
+    budgetReceita         Decimal? @map("budget_receita") @db.Decimal(12, 2)
+    budgetOnTime          Decimal? @map("budget_on_time") @db.Decimal(5, 2)
+    budgetOcupacao        Decimal? @map("budget_ocupacao") @db.Decimal(5, 2)
+    budgetTerceiro        Decimal? @map("budget_terceiro") @db.Decimal(5, 2)
+    budgetDisponibilidade Decimal? @map("budget_disponibilidade") @db.Decimal(5, 2)
     createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
     updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
     entries   KpiEntry[]

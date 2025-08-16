@@ -155,10 +155,11 @@ export function KpiPivotHistory() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="min-w-56 sticky left-0 z-20 bg-background">Centro/Cliente</TableHead>
-                      {daysInMonth.map((d) => (
+                    {daysInMonth.map((d) => (
                       <TableHead key={d} className="text-center sticky top-0 bg-background z-10">{d}</TableHead>
                     ))}
-                    <TableHead className="text-center sticky right-0 bg-background z-10">Total</TableHead>
+                    <TableHead className="text-center sticky right-8 bg-background z-10 w-8 whitespace-nowrap text-sm">Total</TableHead>
+                    <TableHead className="text-center sticky right-0 bg-background z-10 w-8 whitespace-nowrap text-sm">Meta</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -184,13 +185,13 @@ export function KpiPivotHistory() {
                     };
                     const renderTotalCell = (valsByDay: number[][]) => {
                       const flat = valsByDay.flat();
-                      if (flat.length === 0) return <TableCell className="text-center sticky right-0 bg-background">-</TableCell>;
+                      if (flat.length === 0) return <TableCell className="text-center sticky right-8 bg-background w-8 text-sm">-</TableCell>;
                       if (kpi === 'RECEITA') {
                         const total = flat.reduce((a, b) => a + b, 0);
-                        return <TableCell className="text-center font-semibold sticky right-0 bg-background">{integerFormatter.format(total)}</TableCell>;
+                        return <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">{integerFormatter.format(total)}</TableCell>;
                       }
                       const avg = flat.reduce((a, b) => a + b, 0) / flat.length;
-                      return <TableCell className="text-center font-semibold sticky right-0 bg-background">{`${Math.round(avg)}%`}</TableCell>;
+                      return <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">{`${Math.round(avg)}%`}</TableCell>;
                     };
 
                     const nonKeyClientsByCenter = new Map<string, string[]>();
@@ -221,6 +222,7 @@ export function KpiPivotHistory() {
                               <TableCell key={d} className="text-center">{renderValueCell(getValuesFor(clientIds, d))}</TableCell>
                             ))}
                             {renderTotalCell(daysInMonth.map((d) => getValuesFor(clientIds, d)))}
+                            <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">-</TableCell>
                           </TableRow>
                         ))}
 
@@ -232,6 +234,7 @@ export function KpiPivotHistory() {
                               <TableCell key={d} className="text-center">{renderValueCell(getValuesFor(nonKeyNoCenter, d))}</TableCell>
                             ))}
                             {renderTotalCell(daysInMonth.map((d) => getValuesFor(nonKeyNoCenter, d)))}
+                            <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">-</TableCell>
                           </TableRow>
                         )}
 
@@ -257,17 +260,55 @@ export function KpiPivotHistory() {
                                 .map((d) => kpiMap[kpi]?.[c.id]?.[d])
                                 .filter((v): v is number => typeof v === "number");
                               if (values.length === 0) {
-                                return <TableCell className="text-center sticky right-0 bg-background">-</TableCell>;
+                                return (
+                                  <>
+                                    <TableCell className="text-center sticky right-8 bg-background w-8 text-sm">-</TableCell>
+                                    <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">
+                                      {(() => {
+                                        const v =
+                                          kpi === 'RECEITA' ? c.budgetReceita :
+                                          kpi === 'ON_TIME' ? c.budgetOnTime :
+                                          kpi === 'OCUPACAO' ? c.budgetOcupacao :
+                                          kpi === 'TERCEIRO' ? c.budgetTerceiro :
+                                          c.budgetDisponibilidade;
+                                        if (v == null) return '-';
+                                        return kpi === 'RECEITA' ? integerFormatter.format(v) : `${Math.round(v)}%`;
+                                      })()}
+                                    </TableCell>
+                                  </>
+                                );
                               }
                               if (kpi === "RECEITA") {
                                 const sum = values.reduce((a, b) => a + b, 0);
                                 return (
-                                  <TableCell className="text-center font-semibold sticky right-0 bg-background">{integerFormatter.format(sum)}</TableCell>
+                                  <>
+                                    <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">{integerFormatter.format(sum)}</TableCell>
+                                    <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">
+                                      {(() => {
+                                        const v = c.budgetReceita;
+                                        if (v == null) return '-';
+                                        return integerFormatter.format(v);
+                                      })()}
+                                    </TableCell>
+                                  </>
                                 );
                               } else {
                                 const avg = values.reduce((a, b) => a + b, 0) / values.length;
                                 return (
-                                  <TableCell className="text-center font-semibold sticky right-0 bg-background">{`${Math.round(avg)}%`}</TableCell>
+                                  <>
+                                    <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">{`${Math.round(avg)}%`}</TableCell>
+                                    <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">
+                                      {(() => {
+                                        const v =
+                                          kpi === 'ON_TIME' ? c.budgetOnTime :
+                                          kpi === 'OCUPACAO' ? c.budgetOcupacao :
+                                          kpi === 'TERCEIRO' ? c.budgetTerceiro :
+                                          c.budgetDisponibilidade;
+                                        if (v == null) return '-';
+                                        return `${Math.round(v)}%`;
+                                      })()}
+                                    </TableCell>
+                                  </>
                                 );
                               }
                             })()}
