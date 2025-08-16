@@ -183,6 +183,37 @@ export function KpiPivotHistory() {
                       const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
                       return `${Math.round(avg)}%`;
                     };
+                    
+                    // Meta diária (linha horizontal)
+                    const relevantClients = clientId ? clients.filter((c) => c.id === clientId) : clients;
+                    const numDays = daysInMonth.length;
+                    const metaRow = (() => {
+                      if (kpi === 'RECEITA') {
+                        const monthlyMeta = relevantClients.reduce((acc, c) => acc + (c.budgetReceita ?? 0), 0);
+                        const daily = numDays > 0 ? monthlyMeta / numDays : 0;
+                        return {
+                          label: 'Meta diária',
+                          byDay: daysInMonth.map(() => (daily > 0 ? integerFormatter.format(daily) : '-')),
+                          total: monthlyMeta > 0 ? integerFormatter.format(monthlyMeta) : '-',
+                          meta: monthlyMeta > 0 ? integerFormatter.format(monthlyMeta) : '-',
+                        };
+                      }
+                      const pick = (c: typeof clients[number]) => (
+                        kpi === 'ON_TIME' ? c.budgetOnTime :
+                        kpi === 'OCUPACAO' ? c.budgetOcupacao :
+                        kpi === 'TERCEIRO' ? c.budgetTerceiro :
+                        c.budgetDisponibilidade
+                      );
+                      const vals = relevantClients.map(pick).filter((v): v is number => typeof v === 'number');
+                      const avg = vals.length ? (vals.reduce((a,b)=>a+b,0) / vals.length) : undefined;
+                      const avgStr = avg == null ? '-' : `${Math.round(avg)}%`;
+                      return {
+                        label: 'Meta diária',
+                        byDay: daysInMonth.map(() => avgStr),
+                        total: avgStr,
+                        meta: avgStr,
+                      };
+                    })();
                     const renderTotalCell = (valsByDay: number[][]) => {
                       const flat = valsByDay.flat();
                       if (flat.length === 0) return <TableCell className="text-center sticky right-8 bg-background w-8 text-sm">-</TableCell>;
@@ -362,6 +393,52 @@ export function KpiPivotHistory() {
                       } else {
                         const avg = allValues.reduce((a, b) => a + b, 0) / allValues.length;
                         return <TableCell className="text-center font-semibold sticky right-0 bg-background">{`${Math.round(avg)}%`}</TableCell>;
+                      }
+                    })()}
+                  </TableRow>
+                  {/* Linha de Meta Diária (última linha) */}
+                  <TableRow>
+                    <TableCell className="font-semibold">Meta diária</TableCell>
+                    {(() => {
+                      if (kpi === 'RECEITA') {
+                        const monthlyMeta = (clientId ? clients.filter((c) => c.id === clientId) : clients)
+                          .reduce((acc, c) => acc + (c.budgetReceita ?? 0), 0);
+                        const daily = daysInMonth.length > 0 ? monthlyMeta / daysInMonth.length : 0;
+                        return (
+                          <>
+                            {daysInMonth.map((d) => (
+                              <TableCell key={`meta-footer-${d}`} className="text-center text-sm">
+                                {monthlyMeta > 0 ? integerFormatter.format(daily) : '-'}
+                              </TableCell>
+                            ))}
+                            <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">
+                              {monthlyMeta > 0 ? integerFormatter.format(monthlyMeta) : '-'}
+                            </TableCell>
+                            <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">
+                              {monthlyMeta > 0 ? integerFormatter.format(monthlyMeta) : '-'}
+                            </TableCell>
+                          </>
+                        );
+                      } else {
+                        const pick = (c: typeof clients[number]) => (
+                          kpi === 'ON_TIME' ? c.budgetOnTime :
+                          kpi === 'OCUPACAO' ? c.budgetOcupacao :
+                          kpi === 'TERCEIRO' ? c.budgetTerceiro :
+                          c.budgetDisponibilidade
+                        );
+                        const relevant = clientId ? clients.filter((c) => c.id === clientId) : clients;
+                        const vals = relevant.map(pick).filter((v): v is number => typeof v === 'number');
+                        const avg = vals.length ? (vals.reduce((a,b)=>a+b,0) / vals.length) : undefined;
+                        const avgStr = avg == null ? '-' : `${Math.round(avg)}%`;
+                        return (
+                          <>
+                            {daysInMonth.map((d) => (
+                              <TableCell key={`meta-footer-${d}`} className="text-center text-sm">{avgStr}</TableCell>
+                            ))}
+                            <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">{avgStr}</TableCell>
+                            <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">{avgStr}</TableCell>
+                          </>
+                        );
                       }
                     })()}
                   </TableRow>

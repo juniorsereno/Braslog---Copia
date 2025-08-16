@@ -140,6 +140,7 @@ export function KpiEntryForm({ defaultDate, onSaved, onCancel }: Props) {
     onSuccess: async () => {
       handleSuccess("Dados de KPI salvos com sucesso");
       onSaved?.();
+      await refetch();
     },
   });
 
@@ -183,9 +184,12 @@ export function KpiEntryForm({ defaultDate, onSaved, onCancel }: Props) {
     setFormData(initialFormRef.current);
   };
 
-  const deleteMutation = api.kpiEntry.delete.useMutation(
-    createMutationHandlers("Entrada de KPI excluída", "Erro ao excluir entrada de KPI"),
-  );
+  const deleteMutation = api.kpiEntry.delete.useMutation({
+    ...createMutationHandlers("Entrada de KPI excluída", "Erro ao excluir entrada de KPI"),
+    onSuccess: async () => {
+      await refetch();
+    },
+  });
 
   const deleteCell = async (clientId: string, field: KpiKey) => {
     const key = `${clientId}:${field}`;
