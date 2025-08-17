@@ -86,25 +86,25 @@ export function KpiPivotHistory() {
   return (
     <div className="flex flex-col gap-6">
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex flex-col gap-2">
-              <Label>Mês</Label>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={() => changeMonth(-1)}>{"<"}</Button>
-                <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
-                <Button variant="outline" onClick={() => changeMonth(1)}>{">"}</Button>
+        <CardContent className="py-2">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs">Mês</Label>
+              <div className="flex items-center gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => changeMonth(-1)}>{"<"}</Button>
+                <Input className="h-8" type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
+                <Button variant="outline" size="sm" onClick={() => changeMonth(1)}>{">"}</Button>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 min-w-64">
-              <Label>Cliente</Label>
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-1 min-w-64">
+              <Label className="text-xs">Cliente</Label>
+              <div className="flex items-center gap-1.5">
                 <Select
                   value={clientId ?? "__ALL__"}
                   onValueChange={(v) => setClientId(v === "__ALL__" ? undefined : v)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-8">
                     <SelectValue placeholder="Todos os clientes" />
                   </SelectTrigger>
                   <SelectContent>
@@ -150,16 +150,16 @@ export function KpiPivotHistory() {
         <Card key={kpi}>
           <CardContent className="pt-6">
             <div className="mb-2 font-semibold">{KPI_TITLES[kpi]} — {monthLabel}</div>
-            <div className="overflow-x-auto">
+            <div className="relative w-full max-w-full overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-56 sticky left-0 z-20 bg-background">Centro/Cliente</TableHead>
+                    <TableHead className="min-w-40 bg-background">Centro/Cliente</TableHead>
                     {daysInMonth.map((d) => (
-                      <TableHead key={d} className="text-center sticky top-0 bg-background z-10">{d}</TableHead>
+                      <TableHead key={d} className="text-center bg-background">{d}</TableHead>
                     ))}
-                    <TableHead className="text-center sticky right-8 bg-background z-10 w-8 whitespace-nowrap text-sm">Total</TableHead>
-                    <TableHead className="text-center sticky right-0 bg-background z-10 w-8 whitespace-nowrap text-sm">Meta</TableHead>
+                    <TableHead className="text-center bg-background z-10 w-16 text-xs">Total</TableHead>
+                    <TableHead className="text-center bg-background z-10 w-16 text-xs">Meta</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -216,13 +216,13 @@ export function KpiPivotHistory() {
                     })();
                     const renderTotalCell = (valsByDay: number[][]) => {
                       const flat = valsByDay.flat();
-                      if (flat.length === 0) return <TableCell className="text-center sticky right-8 bg-background w-8 text-sm">-</TableCell>;
+                      if (flat.length === 0) return <TableCell className="text-center bg-background w-16 text-xs">-</TableCell>;
                       if (kpi === 'RECEITA') {
                         const total = flat.reduce((a, b) => a + b, 0);
-                        return <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">{integerFormatter.format(total)}</TableCell>;
+                        return <TableCell className="text-center font-semibold bg-background w-16 text-xs">{integerFormatter.format(total)}</TableCell>;
                       }
                       const avg = flat.reduce((a, b) => a + b, 0) / flat.length;
-                      return <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">{`${Math.round(avg)}%`}</TableCell>;
+                      return <TableCell className="text-center font-semibold bg-background w-16 text-xs">{`${Math.round(avg)}%`}</TableCell>;
                     };
 
                     const nonKeyClientsByCenter = new Map<string, string[]>();
@@ -248,31 +248,31 @@ export function KpiPivotHistory() {
                         {/* Linhas por Centro de Custo */}
                         {centerRows.map(({ cc, clientIds }) => (
                           <TableRow key={`cc-${cc.id}`}>
-                            <TableCell className="font-medium whitespace-nowrap sticky left-0 bg-background z-10">{cc.name}</TableCell>
+                            <TableCell className="min-w-40 font-medium whitespace-nowrap bg-background">{cc.name}</TableCell>
                             {daysInMonth.map((d) => (
                               <TableCell key={d} className="text-center">{renderValueCell(getValuesFor(clientIds, d))}</TableCell>
                             ))}
                             {renderTotalCell(daysInMonth.map((d) => getValuesFor(clientIds, d)))}
-                            <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">-</TableCell>
+                            <TableCell className="text-center bg-background w-16 text-xs">-</TableCell>
                           </TableRow>
                         ))}
 
                         {/* Grupo Sem Centro (agregado) */}
                         {nonKeyNoCenter.length > 0 && (
                           <TableRow key="cc-none">
-                            <TableCell className="font-medium whitespace-nowrap sticky left-0 bg-background z-10">Sem Centro</TableCell>
+                            <TableCell className="min-w-40 font-medium whitespace-nowrap bg-background">Sem Centro</TableCell>
                             {daysInMonth.map((d) => (
                               <TableCell key={d} className="text-center">{renderValueCell(getValuesFor(nonKeyNoCenter, d))}</TableCell>
                             ))}
                             {renderTotalCell(daysInMonth.map((d) => getValuesFor(nonKeyNoCenter, d)))}
-                            <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">-</TableCell>
+                            <TableCell className="text-center bg-background w-16 text-xs">-</TableCell>
                           </TableRow>
                         )}
 
                         {/* Clientes chave (linha individual) */}
                         {keyAccounts.map((c) => (
                           <TableRow key={`ka-${c.id}`}>
-                            <TableCell className="font-medium whitespace-nowrap sticky left-0 bg-background z-10">{c.name}</TableCell>
+                            <TableCell className="min-w-40 font-medium whitespace-nowrap bg-background">{c.name}</TableCell>
                             {daysInMonth.map((d) => {
                               const row = kpiMap[kpi]?.[c.id];
                               const v = row ? row[d] : undefined;
@@ -293,8 +293,8 @@ export function KpiPivotHistory() {
                               if (values.length === 0) {
                                 return (
                                   <>
-                                    <TableCell className="text-center sticky right-8 bg-background w-8 text-sm">-</TableCell>
-                                    <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">
+                                    <TableCell className="text-center bg-background w-16 text-xs">-</TableCell>
+                                    <TableCell className="text-center bg-background w-16 text-xs">
                                       {(() => {
                                         const v =
                                           kpi === 'RECEITA' ? c.budgetReceita :
@@ -313,8 +313,8 @@ export function KpiPivotHistory() {
                                 const sum = values.reduce((a, b) => a + b, 0);
                                 return (
                                   <>
-                                    <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">{integerFormatter.format(sum)}</TableCell>
-                                    <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">
+                                    <TableCell className="text-center font-semibold bg-background w-16 text-xs">{integerFormatter.format(sum)}</TableCell>
+                                    <TableCell className="text-center bg-background w-16 text-xs">
                                       {(() => {
                                         const v = c.budgetReceita;
                                         if (v == null) return '-';
@@ -327,8 +327,8 @@ export function KpiPivotHistory() {
                                 const avg = values.reduce((a, b) => a + b, 0) / values.length;
                                 return (
                                   <>
-                                    <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">{`${Math.round(avg)}%`}</TableCell>
-                                    <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">
+                                    <TableCell className="text-center font-semibold bg-background w-16 text-xs">{`${Math.round(avg)}%`}</TableCell>
+                                    <TableCell className="text-center bg-background w-16 text-xs">
                                       {(() => {
                                         const v =
                                           kpi === 'ON_TIME' ? c.budgetOnTime :
@@ -385,14 +385,14 @@ export function KpiPivotHistory() {
                           .filter((v): v is number => typeof v === "number")
                       );
                       if (allValues.length === 0) {
-                        return <TableCell className="text-center sticky right-0 bg-background">-</TableCell>;
+                        return <TableCell className="text-center bg-background w-16 text-xs">-</TableCell>;
                       }
                       if (kpi === "RECEITA") {
                         const total = allValues.reduce((a, b) => a + b, 0);
-                        return <TableCell className="text-center font-semibold sticky right-0 bg-background">{integerFormatter.format(total)}</TableCell>;
+                        return <TableCell className="text-center font-semibold bg-background w-16 text-xs">{integerFormatter.format(total)}</TableCell>;
                       } else {
                         const avg = allValues.reduce((a, b) => a + b, 0) / allValues.length;
-                        return <TableCell className="text-center font-semibold sticky right-0 bg-background">{`${Math.round(avg)}%`}</TableCell>;
+                        return <TableCell className="text-center font-semibold bg-background w-16 text-xs">{`${Math.round(avg)}%`}</TableCell>;
                       }
                     })()}
                   </TableRow>
@@ -411,12 +411,10 @@ export function KpiPivotHistory() {
                                 {monthlyMeta > 0 ? integerFormatter.format(daily) : '-'}
                               </TableCell>
                             ))}
-                            <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">
+                            <TableCell className="text-center font-semibold bg-background w-16 text-xs">
                               {monthlyMeta > 0 ? integerFormatter.format(monthlyMeta) : '-'}
                             </TableCell>
-                            <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">
-                              {monthlyMeta > 0 ? integerFormatter.format(monthlyMeta) : '-'}
-                            </TableCell>
+                            <TableCell className="text-center bg-background w-16 text-xs">-</TableCell>
                           </>
                         );
                       } else {
@@ -435,8 +433,8 @@ export function KpiPivotHistory() {
                             {daysInMonth.map((d) => (
                               <TableCell key={`meta-footer-${d}`} className="text-center text-sm">{avgStr}</TableCell>
                             ))}
-                            <TableCell className="text-center font-semibold sticky right-8 bg-background w-8 text-sm">{avgStr}</TableCell>
-                            <TableCell className="text-center sticky right-0 bg-background w-8 text-sm">{avgStr}</TableCell>
+                            <TableCell className="text-center font-semibold bg-background w-16 text-xs">{avgStr}</TableCell>
+                            <TableCell className="text-center bg-background w-16 text-xs">-</TableCell>
                           </>
                         );
                       }

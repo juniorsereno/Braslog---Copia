@@ -68,7 +68,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 animate-in fade-in-50 duration-200">
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 overflow-x-hidden animate-in fade-in-50 duration-200">
           {children}
         </div>
       </SidebarInset>
