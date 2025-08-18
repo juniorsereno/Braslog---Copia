@@ -32,6 +32,19 @@ export function KpiPivotHistory() {
   });
   const entries = useMemo(() => data?.entries ?? [], [data?.entries]);
 
+  // Mês anterior (para linha "Prior Month")
+  const prevMonth = useMemo(() => {
+    const parts = month.split('-');
+    const y = Number(parts[0]);
+    const m = Number(parts[1]);
+    const d = new Date(y, m - 2, 1); // m-1 é atual (1-based), então m-2 dá mês anterior
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }, [month]);
+  const { data: prevData } = api.kpiEntry.getByMonth.useQuery({ month: prevMonth, clientId: clientId ?? undefined }, {
+    placeholderData: (prev) => prev,
+  });
+  const prevEntries = useMemo(() => prevData?.entries ?? [], [prevData?.entries]);
+
   // Buscar clientes para linhas (sempre todos para mostrar '-')
   const { data: clientsResp, error: clientsError } = api.client.getAll.useQuery({ limit: 100, offset: 0 }, { refetchOnWindowFocus: false });
   const clients = (clientsResp?.clients ?? []).sort((a, b) => a.name.localeCompare(b.name));
@@ -64,6 +77,23 @@ export function KpiPivotHistory() {
     return map;
   }, [entries]);
 
+  // Mapa do mês anterior (kpiType -> clientId -> day -> value)
+  const prevKpiMap = useMemo(() => {
+    const map: Record<KpiKey, Record<string, Record<number, number>>> = {
+      RECEITA: {}, ON_TIME: {}, OCUPACAO: {}, TERCEIRO: {}, DISPONIBILIDADE: {}
+    };
+    for (const e of prevEntries) {
+      const key = e.kpiType as KpiKey;
+      const d = new Date(e.date);
+      const day = d.getUTCDate();
+      const byClient = map[key];
+      const currentRow = byClient[e.clientId] ?? {};
+      currentRow[day] = e.kpiValue;
+      byClient[e.clientId] = currentRow;
+    }
+    return map;
+  }, [prevEntries]);
+
   const integerFormatter = useMemo(() => new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0, minimumFractionDigits: 0 }), []);
 
   const monthLabel = useMemo(() => {
@@ -73,6 +103,20 @@ export function KpiPivotHistory() {
     const m = parts[1] ?? '';
     return `${m}/${y}`;
   }, [month]);
+
+  // Limite de dias a mostrar para "Prior Month" quando o mês selecionado é o mês corrente
+  const maxDayToShow = useMemo(() => {
+    const now = new Date();
+    const nowMonth = now.getMonth() + 1; // 1..12
+    const nowYear = now.getFullYear();
+    const [selYearStr, selMonthStr] = month.split('-');
+    const selYear = Number(selYearStr);
+    const selMonth = Number(selMonthStr);
+    if (selYear === nowYear && selMonth === nowMonth) {
+      return now.getDate();
+    }
+    return daysInMonth.length;
+  }, [month, daysInMonth.length]);
 
   const changeMonth = (delta: number) => {
     const parts = month.split('-');
@@ -395,6 +439,50 @@ export function KpiPivotHistory() {
                         return <TableCell className="text-center font-semibold bg-background w-16 text-xs">{`${Math.round(avg)}%`}</TableCell>;
                       }
                     })()}
+                  </TableRow>
+                  {/* Linha Prior Month (comparação com mês anterior até o dia atual quando aplicável) */}
+                  <TableRow>
+                    <TableCell className="font-semibold">Prior Month</TableCell>
+                    {daysInMonth.map((d, idx) => {
+                      if (idx + 1 > maxDayToShow) {
+                        return (
+                          <TableCell key={`prior-${d}`} className="text-center text-muted-foreground">-</TableCell>
+                        );
+                      }
+                      const relevant = clientId ? clients.filter((c) => c.id === clientId) : clients;
+                      const vals = relevant.flatMap((c) => {
+                        const row = prevKpiMap[kpi]?.[c.id];
+                        const v = row ? row[d] : undefined;
+                        return typeof v === 'number' ? [v] : [];
+                      });
+                      if (vals.length === 0) {
+                        return <TableCell key={`prior-${d}`} className="text-center">-</TableCell>;
+                      }
+                      if (kpi === 'RECEITA') {
+                        const sum = vals.reduce((a,b)=>a+b,0);
+                        return <TableCell key={`prior-${d}`} className="text-center font-semibold">{integerFormatter.format(sum)}</TableCell>;
+                      }
+                      const avg = vals.reduce((a,b)=>a+b,0) / vals.length;
+                      return <TableCell key={`prior-${d}`} className="text-center font-semibold">{`${Math.round(avg)}%`}</TableCell>;
+                    })}
+                    {(() => {
+                      const relevant = clientId ? clients.filter((c) => c.id === clientId) : clients;
+                      const allValues = relevant.flatMap((c) =>
+                        Array.from({ length: maxDayToShow }, (_, i) => i + 1)
+                          .map((d) => prevKpiMap[kpi]?.[c.id]?.[d])
+                          .filter((v): v is number => typeof v === 'number')
+                      );
+                      if (allValues.length === 0) {
+                        return <TableCell className="text-center bg-background w-16 text-xs">-</TableCell>;
+                      }
+                      if (kpi === 'RECEITA') {
+                        const total = allValues.reduce((a,b)=>a+b,0);
+                        return <TableCell className="text-center font-semibold bg-background w-16 text-xs">{integerFormatter.format(total)}</TableCell>;
+                      }
+                      const avg = allValues.reduce((a,b)=>a+b,0) / allValues.length;
+                      return <TableCell className="text-center font-semibold bg-background w-16 text-xs">{`${Math.round(avg)}%`}</TableCell>;
+                    })()}
+                    <TableCell className="text-center bg-background w-16 text-xs">-</TableCell>
                   </TableRow>
                   {/* Linha de Meta Diária (última linha) */}
                   <TableRow>
