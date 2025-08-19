@@ -2,6 +2,7 @@ import { DashboardLayout } from "~/components/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { BarChart3, Users, TrendingUp, Calendar } from "lucide-react";
+import { DashboardTopCards } from "~/components/dashboard-top-cards";
 
 export default function DashboardPage() {
   return (
@@ -14,72 +15,8 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Cards de estatísticas rápidas */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Clientes Ativos
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">--</div>
-              <p className="text-xs text-muted-foreground">
-                Aguardando implementação
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                KPIs Hoje
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">--</div>
-              <p className="text-xs text-muted-foreground">
-                Aguardando implementação
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Última Atualização
-              </CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">--</div>
-              <p className="text-xs text-muted-foreground">
-                Aguardando implementação
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Status Sistema
-              </CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                <Badge variant="default" className="bg-green-500">
-                  Online
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Sistema operacional
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Top cards de KPIs (REAL, BGT, PM) */}
+        <DashboardTopCards />
 
         {/* Cards de ações rápidas */}
         <div className="grid gap-4 md:grid-cols-2">

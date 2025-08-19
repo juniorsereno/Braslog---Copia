@@ -192,6 +192,17 @@ export type ListKpiEntries = z.infer<typeof ListKpiEntriesSchema>;
 export type GetKpiByMonth = z.infer<typeof GetKpiByMonthSchema>;
 
 /**
+ * Schema para resumo do dashboard (cards superiores)
+ */
+export const GetDashboardSummarySchema = z.object({
+  date: KpiDateSchema,
+  clientIds: z.array(z.string().uuid()).optional(),
+  costCenterIds: z.array(z.string().uuid()).optional(),
+});
+
+export type GetDashboardSummary = z.infer<typeof GetDashboardSummarySchema>;
+
+/**
  * Tipo para entrada de KPI completa (incluindo campos do banco)
  */
 export type KpiEntry = {

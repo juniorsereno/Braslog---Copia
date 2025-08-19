@@ -8,6 +8,7 @@ import type {
   UpsertKpiEntries as UpsertKpiEntriesInput,
   ListKpiEntries as ListKpiEntriesInput,
   GetKpiByMonth as GetKpiByMonthInput,
+  GetDashboardSummary as GetDashboardSummaryInput,
 } from "~/lib/validations/kpi";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import {
@@ -16,6 +17,7 @@ import {
   GetKpiEntryByIdSchema,
   GetKpiEntriesByDateSchema,
   GetKpiByMonthSchema,
+  GetDashboardSummarySchema,
   DeleteKpiEntrySchema,
   UpsertKpiEntriesSchema,
   ListKpiEntriesSchema,
@@ -860,5 +862,139 @@ export const kpiEntryRouter = createTRPCRouter({
       });
 
       return { entries: typedEntries };
+    }),
+
+  /**
+   * Resumo para os cards superiores do dashboard (REAL, BGT, PM)
+   */
+  getDashboardSummary: protectedProcedure
+    .input(GetDashboardSummarySchema)
+    .query(async ({ ctx, input }: { ctx: Awaited<ReturnType<typeof createTRPCContext>>; input: GetDashboardSummaryInput }) => {
+      const { date, clientIds, costCenterIds } = input;
+
+      // Calcular janelas MTD e PM (timezone: America/Sao_Paulo assumido via data em UTC simples YYYY-MM-DD)
+      const [yStr, mStr, dStr] = date.split("-");
+      const y = Number(yStr);
+      const m = Number(mStr); // 1..12
+      const d = Number(dStr);
+      const daysInMonth = new Date(y, m, 0).getDate();
+      const dayOfMonth = Math.min(d, daysInMonth);
+
+      const mtdStart = `${yStr}-${mStr}-01`;
+      const mtdEnd = `${yStr}-${mStr}-${String(dayOfMonth).padStart(2, "0")}`;
+
+      // Mês anterior
+      const prevMonthDate = new Date(y, m - 2, 1); // JS month index-based
+      const py = prevMonthDate.getFullYear();
+      const pm = prevMonthDate.getMonth() + 1; // 1..12
+      const prevDaysInMonth = new Date(py, pm, 0).getDate();
+      const prevD = Math.min(dayOfMonth, prevDaysInMonth);
+      const pmStart = `${py}-${String(pm).padStart(2, "0")}-01`;
+      const pmEnd = `${py}-${String(pm).padStart(2, "0")}-${String(prevD).padStart(2, "0")}`;
+
+      // Build base query helper com filtros de cliente/centro
+      const applyFilters = (qb: any) => {
+        if (clientIds && clientIds.length > 0) {
+          qb = qb.in('client_id', clientIds);
+        }
+        if (costCenterIds && costCenterIds.length > 0) {
+          qb = qb.in('clients.cost_center_id', costCenterIds);
+        }
+        return qb;
+      };
+
+      // Fetch em paralelo
+      const receitaMtdQ = applyFilters(
+        ctx.supabase
+          .from('kpi_entries')
+          .select('kpi_value, client_id, clients(cost_center_id)')
+          .eq('kpi_type', 'RECEITA')
+          .gte('date', mtdStart)
+          .lte('date', mtdEnd)
+      );
+      const receitaPmQ = applyFilters(
+        ctx.supabase
+          .from('kpi_entries')
+          .select('kpi_value, client_id, clients(cost_center_id)')
+          .eq('kpi_type', 'RECEITA')
+          .gte('date', pmStart)
+          .lte('date', pmEnd)
+      );
+
+      const percentTypes = ['ON_TIME', 'OCUPACAO', 'TERCEIRO', 'DISPONIBILIDADE'] as const;
+      const percentMtdQs = percentTypes.map((type) => applyFilters(
+        ctx.supabase
+          .from('kpi_entries')
+          .select('kpi_value, client_id, clients(cost_center_id)')
+          .eq('kpi_type', type)
+          .gte('date', mtdStart)
+          .lte('date', mtdEnd)
+      ));
+      const percentPmQs = percentTypes.map((type) => applyFilters(
+        ctx.supabase
+          .from('kpi_entries')
+          .select('kpi_value, client_id, clients(cost_center_id)')
+          .eq('kpi_type', type)
+          .gte('date', pmStart)
+          .lte('date', pmEnd)
+      ));
+
+      const budgetsQ = (() => {
+        let qb = ctx.supabase
+          .from('clients')
+          .select('id, cost_center_id, budget_receita, budget_on_time, budget_ocupacao, budget_terceiro, budget_disponibilidade');
+        if (clientIds && clientIds.length > 0) qb = qb.in('id', clientIds);
+        if (costCenterIds && costCenterIds.length > 0) qb = qb.in('cost_center_id', costCenterIds);
+        return qb;
+      })();
+
+      const [receitaMtdRes, receitaPmRes, percentMtdResList, percentPmResList, budgetsRes] = await Promise.all([
+        receitaMtdQ, receitaPmQ, Promise.all(percentMtdQs), Promise.all(percentPmQs), budgetsQ,
+      ]);
+
+      const sumValues = (rows?: Array<{ kpi_value: string | number }>) =>
+        (rows ?? []).reduce((acc, r) => acc + parseFloat(String(r.kpi_value ?? 0)), 0);
+      const avgValues = (rows?: Array<{ kpi_value: string | number }>) => {
+        const vals = (rows ?? []).map((r) => parseFloat(String(r.kpi_value ?? 0)));
+        if (vals.length === 0) return 0;
+        return vals.reduce((a, b) => a + b, 0) / vals.length;
+      };
+
+      const receitaReal = sumValues(receitaMtdRes.data as any);
+      const receitaPm = sumValues(receitaPmRes.data as any);
+
+      const [onTimeMtd, ocupacaoMtd, terceiroMtd, disponibilidadeMtd] = percentMtdResList.map((res) => avgValues(res.data as any));
+      const [onTimePm, ocupacaoPm, terceiroPm, disponibilidadePm] = percentPmResList.map((res) => avgValues(res.data as any));
+
+      // Metas (BGT)
+      type BudgetRow = {
+        budget_receita: string | number | null;
+        budget_on_time: string | number | null;
+        budget_ocupacao: string | number | null;
+        budget_terceiro: string | number | null;
+        budget_disponibilidade: string | number | null;
+      };
+      const budgets = (budgetsRes.data ?? []) as BudgetRow[];
+      const sumBudgetReceita = budgets.reduce((a, b) => a + (b.budget_receita ? parseFloat(String(b.budget_receita)) : 0), 0);
+      const avgBudget = (field: keyof BudgetRow) => {
+        const vals = budgets.map((b) => (b[field] != null ? parseFloat(String(b[field]!)) : undefined)).filter((v): v is number => typeof v === 'number');
+        if (vals.length === 0) return 0;
+        return vals.reduce((a, b) => a + b, 0) / vals.length;
+      };
+      const receitaBgt = sumBudgetReceita * (dayOfMonth / daysInMonth);
+      const onTimeBgt = avgBudget('budget_on_time');
+      const ocupacaoBgt = avgBudget('budget_ocupacao');
+      const terceiroBgt = avgBudget('budget_terceiro');
+      const disponibilidadeBgt = avgBudget('budget_disponibilidade');
+
+      return {
+        dayOfMonth,
+        daysInMonth,
+        receita: { real: receitaReal, bgt: receitaBgt, pm: receitaPm },
+        onTime: { real: onTimeMtd, bgt: onTimeBgt, pm: onTimePm },
+        ocupacao: { real: ocupacaoMtd, bgt: ocupacaoBgt, pm: ocupacaoPm },
+        terceiro: { real: terceiroMtd, bgt: terceiroBgt, pm: terceiroPm },
+        disponibilidade: { real: disponibilidadeMtd, bgt: disponibilidadeBgt, pm: disponibilidadePm },
+      };
     }),
 });
